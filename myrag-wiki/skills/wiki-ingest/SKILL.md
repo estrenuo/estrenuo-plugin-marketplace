@@ -25,6 +25,17 @@ Je bent de wiki-onderhouder. Codificeer de 10-staps ingest-workflow als rigide c
 
 ---
 
+## Stap 0 — Session state lezen (context-log)
+
+Lees `wiki/context-log.md` aan het begin van elke ingest-operatie.
+
+- Als het bestand een sessie-ID bevat die overeenkomt met de huidige sessie: sla bestanden over die al als "Verwerkt" staan. Meld dit aan de gebruiker.
+- Als het bestand een ander sessie-ID bevat of leeg is: ga normaal verder.
+
+Dit voorkomt dubbele verwerking wanneer de ingest-skill meerdere keren in dezelfde sessie wordt aangeroepen.
+
+---
+
 ## Stap 1 — Detectie (auto-modus)
 
 Detecteer welke bestanden verwerkt moeten worden voordat je begint.
@@ -173,6 +184,22 @@ Minimaal vereist (INGS-07):
 - **Stubs created:** nieuwe stubs (of: Geen)
 - **Meest interessante bevinding:** nooit weglaten
 - **Suggesties voor vervolgvragen:** aanbevolen maar niet verplicht
+
+---
+
+## Stap 5b — Session state schrijven (context-log)
+
+Schrijf `wiki/context-log.md` na elke ingest-operatie:
+
+| Veld | Waarde |
+|---|---|
+| Datum | huidige datum (YYYY-MM-DD) |
+| Sessie-ID | sessie-identifier |
+| Verwerkt | lijst van verwerkte bestandsnamen |
+| Overgeslagen | lijst van overgeslagen bestanden (ongewijzigd of al verwerkt) |
+| Open | eventuele openstaande items (mislukte bestanden, vragen) |
+
+Bij een nieuwe sessie (ander sessie-ID): overschrijf de tabel volledig.
 
 ---
 
