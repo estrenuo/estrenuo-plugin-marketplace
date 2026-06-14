@@ -5,6 +5,7 @@ Een verzameling Claude Code / Cowork plugins van Estrenuo.
 ## Plugins in deze marketplace
 
 - **[myrag-wiki](myrag-wiki/)** — Skills + agents voor het onderhouden van een Obsidian-based LLM wiki: ingest, query, lint, explore en start workflows bovenop de qmd MCP-server.
+- **[hermes-tweet](hermes-tweet/)** - Native Hermes Agent X/Twitter plugin for read-first social research and approval-gated publishing workflows.
 
 ## Installeren
 
