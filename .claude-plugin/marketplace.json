@@ -5,6 +5,11 @@
   },
   "plugins": [
     {
+      "name": "hermes-tweet",
+      "source": "./hermes-tweet",
+      "description": "Native Hermes Agent X/Twitter plugin for read-first social research and approval-gated publishing workflows."
+    },
+    {
       "name": "myrag-wiki",
       "source": "./myrag-wiki",
       "description": "Wiki maintainer skills voor een Obsidian-based LLM wiki (ingest, query, lint, explore, start, autoresearch)."
