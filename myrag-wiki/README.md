@@ -45,6 +45,10 @@ Voeg de marketplace toe aan team-`settings.json` zodat alle teamleden hem automa
 }
 ```
 
+> **Migratie:** de marketplace heette eerder `claude-plugin-marketplace`. Bestaande
+> installs moeten opnieuw toevoegen onder `estrenuo-plugin-marketplace`. Zie de
+> [marketplace-README](../README.md#migratie-hernoemd-van-claude-plugin-marketplace-juni-2026).
+
 ## Vault bootstrap
 
 De skills + agents lezen bij elke startup `CLAUDE.md` en `index.md` uit de vault root.

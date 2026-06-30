@@ -35,6 +35,26 @@ Voeg de marketplace toe aan team-`settings.json` zodat alle teamleden hem automa
 
 Zie de README van elke plugin voor specifieke vereisten en configuratie.
 
+## Migratie: hernoemd van `claude-plugin-marketplace` (juni 2026)
+
+Deze marketplace heette eerst `claude-plugin-marketplace`. De naam is gewijzigd
+omdat "claude" gereserveerd is voor Anthropic. **Dit is een breaking change voor
+bestaande installs**: de `name` in `marketplace.json` is veranderd, dus de oude
+marketplace- en plugin-referenties werken niet meer.
+
+GitHub redirect de oude repo-URL automatisch, maar de marketplace-naam waaronder
+plugins geïnstalleerd zijn niet. Wie de plugin had onder de oude naam:
+
+```text
+/plugin marketplace remove claude-plugin-marketplace
+/plugin marketplace add estrenuo/estrenuo-plugin-marketplace
+/plugin install myrag-wiki@estrenuo-plugin-marketplace
+```
+
+In Claude Cowork: vervang in team-`settings.json` de key `claude-plugin-marketplace`
+door `estrenuo-plugin-marketplace` en de plugin-key `myrag-wiki@claude-plugin-marketplace`
+door `myrag-wiki@estrenuo-plugin-marketplace`.
+
 ## Bijdragen
 
 Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor de versioning- en tag-conventie
