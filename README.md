@@ -1,4 +1,4 @@
-# claude-plugin-marketplace
+# estrenuo-plugin-marketplace
 
 Een verzameling Claude Code / Cowork plugins van Estrenuo.
 
@@ -11,8 +11,8 @@ Een verzameling Claude Code / Cowork plugins van Estrenuo.
 Voeg de marketplace toe en installeer een plugin:
 
 ```text
-/plugin marketplace add estrenuo/claude-plugin-marketplace
-/plugin install myrag-wiki@claude-plugin-marketplace
+/plugin marketplace add estrenuo/estrenuo-plugin-marketplace
+/plugin install myrag-wiki@estrenuo-plugin-marketplace
 ```
 
 ### In Claude Cowork
@@ -22,13 +22,13 @@ Voeg de marketplace toe aan team-`settings.json` zodat alle teamleden hem automa
 ```json
 {
   "extraKnownMarketplaces": {
-    "claude-plugin-marketplace": {
+    "estrenuo-plugin-marketplace": {
       "type": "github",
-      "repo": "estrenuo/claude-plugin-marketplace"
+      "repo": "estrenuo/estrenuo-plugin-marketplace"
     }
   },
   "enabledPlugins": {
-    "myrag-wiki@claude-plugin-marketplace": true
+    "myrag-wiki@estrenuo-plugin-marketplace": true
   }
 }
 ```

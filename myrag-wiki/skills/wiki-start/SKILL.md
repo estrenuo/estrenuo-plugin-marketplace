@@ -1,11 +1,15 @@
 ---
 name: wiki-start
 description: |
-  Gebruik deze skill wanneer de gebruiker een wiki-sessie wil starten.
-  Typische triggers: "start", "begin sessie", "start wiki session",
-  "open wiki", "laten we beginnen", "sessie starten", of elke
-  informele variant die aangeeft dat de gebruiker klaar is om met
-  de wiki te werken.
+  Gebruik deze skill wanneer de gebruiker expliciet een wiki-sessie wil
+  starten. Typische triggers: "wiki start", "start wiki session",
+  "open wiki", "wiki sessie starten", "begin wiki-sessie", of een
+  informele variant die de wiki expliciet noemt.
+
+  Triggert NIET op het kale "start" of generieke sessie-openers
+  ("begin sessie", "laten we beginnen", "sessie starten", "waar waren
+  we") — die horen bij session-briefing, de eenduidige eigenaar van
+  sessiestart. Vereis een expliciete verwijzing naar de wiki.
 
   Deze skill is verplicht — niet optioneel — omdat het session start
   protocol 6 geordende stappen heeft die elk een specifiek doel

@@ -6,7 +6,7 @@ Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (zie `templ
 
 **Skills** (auto-activerend op natural-language triggers):
 
-- `wiki-start` — sessie starten, oriëntatie op de wiki
+- `wiki-start` — wiki-sessie starten ("wiki start", "open wiki"), oriëntatie op de wiki
 - `wiki-ingest` — bronnen verwerken vanuit `raw/`
 - `wiki-query` — kennisvragen beantwoorden via qmd + indexes
 - `wiki-lint` — health check (broken links, orphans, stubs)
@@ -23,8 +23,8 @@ Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (zie `templ
 ### Via GitHub
 
 ```text
-/plugin marketplace add estrenuo/claude-plugin-marketplace
-/plugin install myrag-wiki@claude-plugin-marketplace
+/plugin marketplace add estrenuo/estrenuo-plugin-marketplace
+/plugin install myrag-wiki@estrenuo-plugin-marketplace
 ```
 
 ### In Claude Cowork
@@ -34,13 +34,13 @@ Voeg de marketplace toe aan team-`settings.json` zodat alle teamleden hem automa
 ```json
 {
   "extraKnownMarketplaces": {
-    "claude-plugin-marketplace": {
+    "estrenuo-plugin-marketplace": {
       "type": "github",
-      "repo": "estrenuo/claude-plugin-marketplace"
+      "repo": "estrenuo/estrenuo-plugin-marketplace"
     }
   },
   "enabledPlugins": {
-    "myrag-wiki@claude-plugin-marketplace": true
+    "myrag-wiki@estrenuo-plugin-marketplace": true
   }
 }
 ```

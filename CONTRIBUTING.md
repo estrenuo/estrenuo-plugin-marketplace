@@ -1,4 +1,4 @@
-# Bijdragen aan claude-plugin-marketplace
+# Bijdragen aan estrenuo-plugin-marketplace
 
 Bedankt voor je interesse. Dit document legt vast hoe we plugins in deze
 marketplace versioneren en taggen. Voor de bredere plugin-architectuur,

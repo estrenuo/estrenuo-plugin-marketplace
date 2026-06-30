@@ -11,7 +11,7 @@ description: |
 
   Deze skill triggert NIET op kennisvragen over wiki-content ("wat is X?",
   "hoe werkt Y?") — gebruik daarvoor wiki-query. De skill triggert ook NIET op
-  sessiestart-commando's ("start", "begin sessie") — gebruik daarvoor wiki-start.
+  wiki-sessiestart-commando's ("wiki start", "open wiki") — gebruik daarvoor wiki-start.
   De skill triggert ook NIET op onderhoudsvragen ("lint", "health check") — gebruik
   daarvoor wiki-lint.
 allowed-tools: Read Bash
