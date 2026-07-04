@@ -16,7 +16,8 @@ Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (zie `templ
 **Agents** (gespecialiseerd, oproepbaar via Task tool):
 
 - `analysis-filer`, `contradiction-detector`, `cross-reference-sweeper`,
-  `gap-detector`, `pdf-ingest-agent`, `source-cluster-tagger`, `stub-filler`
+  `gap-detector`, `open-questions-triage`, `pdf-ingest-agent`,
+  `source-cluster-tagger`, `stub-filler`
 
 ## Installeren
 
