@@ -26,30 +26,24 @@ vóór er fixes worden gedaan.
 
 ### Blok A — Algoritmische checks (Grep + Bash)
 
-**Check 1: Bare-alias wikilinks**
+**Check 1+2: Bare-alias & broken wikilinks — via tool (NIET met de hand grep'en)**
 
-Doel: links opsporen die er goed uitzien maar in Obsidian een nieuwe lege pagina aanmaken.
+Doel: links opsporen die er goed uitzien maar in Obsidian een nieuwe lege pagina
+aanmaken (bare-alias), plus links waarvan het doelbestand nergens bestaat (broken).
 
-- Grep over `wiki/**/*.md` naar patroon `\[\[[^\|]+\]\]`
-- Voor elke match: zet de linktekst om naar kebab-case bestandsnaam
-  (spaties → koppeltekens, lowercase; bijv. `Data Vault 2.0` → `data-vault-2.md`,
-  zoals `wiki/concepts/data-vault-2.md`; let op: versienummer-suffixen zoals `.0`
-  worden in bestandsnamen vaak weggelaten)
-- Controleer vault-breed of `{kebab-naam}.md` bestaat:
-  `find wiki/ -name "{kebab-naam}.md" | grep -q .`
-  (niet alleen in de root van `wiki/` — bestanden kunnen in subdirectories staan
-  zoals `entities/`, `concepts/`, `sources/`, `recipes/`, `travel/`, `analysis/`)
-- Als het bestand nergens in de vault gevonden wordt: rapporteer als bare-alias kandidaat
-- Pas FP-uitzonderingen toe vóór rapportage (zie hieronder)
-
-**Check 2: Broken wikilinks**
-
-Doel: links vinden waarvan het doelbestand nergens in de vault bestaat.
-
-- Grep over `wiki/**/*.md` naar patroon `\[\[([^\]]+)\]\]`
-- Extraheer slug: bij piped link (`slug|Display`) is slug het deel vóór `|`
-- Controleer of het doelbestand ergens in de vault bestaat (niet alleen in `wiki/`)
-- Pas FP-uitzonderingen toe vóór rapportage
+- Draai vanuit de vault-root:
+  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/wikilinks.py" lint`
+  (voeg `--plain` toe voor leesbare output; JSON is default met velden
+  `files_scanned`, `by_category`, `results[]`). Exit 1 bij findings, 0 als schoon.
+- De tool scant alle wiki-pagina's, deelt findings in `broken-bare` /
+  `broken-piped` / `bare-alias`, en geeft per finding een `suggested_fix`
+  (de correcte piped link om te plakken).
+- De tool handelt de false-positives **zélf** af (code spans, fenced blocks,
+  `\|`-tabelescape, `[[index]]`, wiki-root-pagina's zoals `review-queue`) — de
+  FP-uitzonderingen hieronder hoeven op deze twee checks niet handmatig toegepast.
+- Voor de correcte piped link van willekeurige display-tekst:
+  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/wikilinks.py" resolve "Display Text" --plain`.
+- Neem `bare-alias` + `broken-*` findings over in het rapport onder Kritiek.
 
 **Check 3: Orphan pages**
 
@@ -62,11 +56,11 @@ Doel: pagina's die niet bereikbaar zijn vanuit andere wiki-pagina's identificere
   (navigatie-hubs of management-bestanden zonder verwachte inkomende wikilinks):
   `sources-index.md`, `concepts-index.md`, `ingest-state.md`, `review-queue.md`
 
-**False-positive-uitzonderingen (alle algoritmische checks)**
+**False-positive-uitzonderingen (orphan-check)**
 
-Zie `references/false-positives.md` voor de volledige
-lijst van false-positive-uitzonderingen die bij alle algoritmische checks
-toegepast moeten worden vóór rapportage.
+Checks 1+2 handelt de tool zelf af. Voor de orphan-check (Check 3) geldt nog:
+zie `references/false-positives.md` voor de volledige lijst van
+false-positive-uitzonderingen die vóór rapportage toegepast moeten worden.
 
 ---
 
