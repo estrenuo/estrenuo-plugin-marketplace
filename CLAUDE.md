@@ -48,6 +48,7 @@ docs/                             # lokaal werk, in .gitignore — niet committe
 ## Plugins in deze marketplace
 
 - **myrag-wiki** — Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (ingest, query, lint, explore, start). Vereist de **estrenuo/qmd fork** (niet upstream qmd); MCP-server staat in `myrag-wiki/.mcp.json` als `qmd-feat`. De skills roepen `mcp__qmd-feat__*` tools aan. Plugin levert ook `templates/CLAUDE.md` dat user-vaults kopiëren als hun eigen vault-schema — dat template is **niet** dezelfde CLAUDE.md als deze.
+- **erwin-docs** — Documentatie-skill voor erwin Data Modeler 12.5. Eén skill (`skills/erwin-docs/`) met zes referentiebestanden in `references/`. Geen MCP-servers of scripts; vereist alleen web search + web fetch in de sessie, want de skill zoekt live in de erwin 12.5-bookshelf.
 
 ## Bekende conventies
 

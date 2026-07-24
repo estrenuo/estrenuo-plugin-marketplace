@@ -8,6 +8,11 @@
       "name": "myrag-wiki",
       "source": "./myrag-wiki",
       "description": "Wiki maintainer skills voor een Obsidian-based LLM wiki (ingest, query, lint, explore, start, autoresearch)."
+    },
+    {
+      "name": "erwin-docs",
+      "source": "./erwin-docs",
+      "description": "Documentatie-skill voor erwin Data Modeler 12.5: geverifieerde antwoorden uit de officiële bookshelf, met bronverwijzing."
     }
   ]
 }

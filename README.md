@@ -5,6 +5,7 @@ Een verzameling Claude Code / Cowork plugins van Estrenuo.
 ## Plugins in deze marketplace
 
 - **[myrag-wiki](myrag-wiki/)** — Skills + agents voor het onderhouden van een Obsidian-based LLM wiki: ingest, query, lint, explore en start workflows bovenop de qmd MCP-server.
+- **[erwin-docs](erwin-docs/)** — Documentatie-skill voor erwin Data Modeler 12.5: beantwoordt vragen uit de officiële bookshelf met geverifieerde class names, property names en macronamen, altijd met bronverwijzing.
 
 ## Installeren
 
@@ -13,6 +14,7 @@ Voeg de marketplace toe en installeer een plugin:
 ```text
 /plugin marketplace add estrenuo/estrenuo-plugin-marketplace
 /plugin install myrag-wiki@estrenuo-plugin-marketplace
+/plugin install erwin-docs@estrenuo-plugin-marketplace
 ```
 
 ### In Claude Cowork

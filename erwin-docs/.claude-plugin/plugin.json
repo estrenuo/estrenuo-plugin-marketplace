@@ -1,0 +1,15 @@
+{
+  "name": "erwin-docs",
+  "version": "0.1.1",
+  "description": "Documentatie-skill voor erwin Data Modeler 12.5: beantwoordt vragen uit de officiële bookshelf met geverifieerde class names, property names en macronamen, altijd met bronverwijzing.",
+  "author": {
+    "name": "Sander Robijns | Estrenuo"
+  },
+  "keywords": [
+    "erwin",
+    "data-modeling",
+    "documentation",
+    "metamodel"
+  ],
+  "license": "MIT"
+}
