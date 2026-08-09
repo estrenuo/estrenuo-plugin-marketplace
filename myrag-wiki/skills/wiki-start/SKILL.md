@@ -58,11 +58,11 @@ Lees `log.md`. Identificeer de laatste 5 entries (herkenbaar aan `## [YYYY-MM-DD
 
 **Waarom:** De recente log geeft context over wat er in vorige sessies is gedaan — nodig om te beoordelen of er open werk is of als er follow-up vereist is vanuit de laatste activiteit.
 
-## Stap 4: Lees wiki/review-queue.md (verplicht — nooit overslaan)
+## Stap 4: Geen review-queue (opgeheven — nooit opnieuw aanmaken)
 
-Lees `wiki/review-queue.md` volledig. Controleer elk open item (`- [ ]`) op de datum direct ná `- [ ] `. Als die datum ≤ vandaag is (YYYY-MM-DD lexicografisch vergelijkbaar), markeer het item als "klaar voor review" voor gebruik in stap 5. Sla deze stap nooit over, ook niet als de queue leeg lijkt.
+`wiki/review-queue.md` is op 2026-08-07 opgeheven; datum-getriggerde acties leven sindsdien in OmniFocus, niet in de wiki. Lees dit bestand niet en maak het niet opnieuw aan, ook niet als een oudere instructie of pagina ernaar verwijst. Ontstaat er tijdens de sessie een actie met een datum, dan hoort die in OmniFocus (skill `plan-to-omnifocus`), en hoort in de wiki alleen de kennis achter die actie te staan.
 
-**Waarom:** Tijdgevoelige review-items worden anders gemist. Dit is de primaire reden dat de sessiestart een skill heeft en geen vrije instructie: zonder afdwinging wordt stap 4 overgeslagen zodra de queue ogenschijnlijk leeg is. CLAUDE.md §Session start protocol §4 vermeldt dit als expliciete vereiste.
+**Waarom:** De queue dupliceerde een functie die OmniFocus al vervult en kon niets afdwingen: een markdown-bestand verschijnt niet op je dag, dus items met een verstreken datum rolden sessie na sessie door. CLAUDE.md §Session start protocol §4 legt deze opheffing expliciet vast.
 
 ## Stap 5: Rapporteer de wiki-status
 
@@ -70,11 +70,10 @@ Rapporteer exact in dit formaat:
 
 > Wiki heeft [N] pagina's verdeeld over [N] categorieën.
 > Laatste activiteit: [datum] — [wat].
-> [Review-items klaar: [lijst] OF Geen review-items vandaag.]
 
 Vraag daarna: "Wat wil je doen?"
 
-**Waarom:** Een gestandaardiseerde rapportage maakt het eenvoudig om de wikistatus snel te beoordelen. Afwijken van het formaat maakt vergelijking tussen sessies lastiger en verbergt ontbrekende informatie (bijv. als review-queue niet gecheckt werd).
+**Waarom:** Een gestandaardiseerde rapportage maakt het eenvoudig om de wikistatus snel te beoordelen. Afwijken van het formaat maakt vergelijking tussen sessies lastiger en verbergt ontbrekende informatie.
 
 ## Stap 6: Wacht op gebruikersinput
 
@@ -88,7 +87,7 @@ Wacht op de reactie van de gebruiker voordat je een vervolgactie start. Start ge
 - [ ] Stap 1: CLAUDE.md volledig gelezen
 - [ ] Stap 2: index.md gelezen, pagina- en categorietellingen beschikbaar
 - [ ] Stap 3: Laatste 5 log-entries gelezen en genoteerd
-- [ ] Stap 4: wiki/review-queue.md gelezen, datumcheck uitgevoerd — nooit overgeslagen
+- [ ] Stap 4: Geen review-queue gelezen of aangemaakt; eventuele datum-acties naar OmniFocus gerouteerd
 - [ ] Stap 5: Status gerapporteerd in exact het voorgeschreven formaat, gevolgd door "Wat wil je doen?"
 - [ ] Stap 6: Geen vervolgactie gestart zonder gebruikersinput
 - [ ] Invarianten: ≤ 300 regels, allowed-tools: [Read], description bevat trigger-varianten en verplichtheidsuitleg

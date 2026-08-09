@@ -196,8 +196,8 @@ At the start of every session:
 1. Read this file (CLAUDE.md)
 2. Read `index.md` om je te oriënteren
 3. Read de laatste 5 entries van `log.md` voor recente activiteit
-4. Read `wiki/review-queue.md` (als die bestaat) — flag open items met datum ≤ vandaag als "ready to review"
-5. Report: "Wiki has N pages across N categories. Last activity: [date] — [what]." + eventuele ready review items
+4. **Geen review-queue.** `wiki/review-queue.md` is opgeheven; datum-getriggerde acties leven in de taakmanager (OmniFocus), niet in de wiki. Maak dit bestand niet opnieuw aan. Ontstaat er tijdens een sessie een actie met een datum, dan hoort die in de taakmanager, en hoort in de wiki alleen de kennis achter die actie te staan.
+5. Report: "Wiki has N pages across N categories. Last activity: [date] — [what]."
 6. Ask: "What would you like to do?"
 
 De `wiki-start` skill automatiseert dit protocol.

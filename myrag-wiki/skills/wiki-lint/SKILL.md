@@ -39,7 +39,7 @@ aanmaken (bare-alias), plus links waarvan het doelbestand nergens bestaat (broke
   `broken-piped` / `bare-alias`, en geeft per finding een `suggested_fix`
   (de correcte piped link om te plakken).
 - De tool handelt de false-positives **zélf** af (code spans, fenced blocks,
-  `\|`-tabelescape, `[[index]]`, wiki-root-pagina's zoals `review-queue`) — de
+  `\|`-tabelescape, `[[index]]`, wiki-root-pagina's zoals `sources-index`) — de
   FP-uitzonderingen hieronder hoeven op deze twee checks niet handmatig toegepast.
 - Voor de correcte piped link van willekeurige display-tekst:
   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/wikilinks.py" resolve "Display Text" --plain`.
@@ -54,7 +54,7 @@ Doel: pagina's die niet bereikbaar zijn vanuit andere wiki-pagina's identificere
 - Verschil (A minus B) = orphan-kandidaten
 - Sluit de volgende beheerbestanden uit van orphan-check
   (navigatie-hubs of management-bestanden zonder verwachte inkomende wikilinks):
-  `sources-index.md`, `concepts-index.md`, `ingest-state.md`, `review-queue.md`
+  `sources-index.md`, `concepts-index.md`, `ingest-state.md`
 
 **False-positive-uitzonderingen (orphan-check)**
 

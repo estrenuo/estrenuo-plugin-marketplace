@@ -1,6 +1,6 @@
 ---
 name: open-questions-triage
-description: Harvests every `## Open questions` section across the wiki, classifies each question by resolvability, clusters them thematically, and produces a prioritized worklist plus ready-to-paste review-queue entries. Optionally scoped to a theme (e.g. "Data Vault", "AI-concepten"). Reports only — does not write to wiki.
+description: Harvests every `## Open questions` section across the wiki, classifies each question by resolvability, clusters them thematically, and produces a prioritized worklist plus ready-to-paste OmniFocus task candidates for dated checkpoints. Optionally scoped to a theme (e.g. "Data Vault", "AI-concepten"). Reports only — does not write to wiki.
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -50,13 +50,13 @@ You turn the standing backlog of `## Open questions` scattered across wiki pages
 
 3. **Resolvable-now-werklijst** (de kern) — de top ≤10 🟢-vragen, elk als: `[[slug|Pagina]]` — de vraag (≤1 zin) — **hoe op te lossen** (≤1 zin: welke sibling-pagina, welke canonical-doc, of welke verificatie).
 
-4. **Review-queue-regels** — voor de 🔵 Needs-Sander-vragen die een gedateerd checkpoint verdienen, lever kant-en-klare regels in het exacte review-queue-format:
-   `- [ ] <datum> — <wat te checken> — [[slug|Pagina]]`
-   Gebruik voor `<datum>` een relatieve horizon in tekst (bv. `~2 weken` of `~1 maand`) omdat deze agent de kalenderdatum niet betrouwbaar kent; de hoofd-agent stempelt de echte `YYYY-MM-DD`.
+4. **OmniFocus-kandidaten** — voor de 🔵 Needs-Sander-vragen die een gedateerd checkpoint verdienen, lever kant-en-klare taakregels:
+   `- <wat te checken> — [[slug|Pagina]] — horizon: <termijn>`
+   Gebruik voor `<termijn>` een relatieve horizon in tekst (bv. `~2 weken` of `~1 maand`) omdat deze agent de kalenderdatum niet betrouwbaar kent; de hoofd-agent stempelt de echte datum bij het aanmaken in OmniFocus. De wiki heeft geen review-queue meer (`wiki/review-queue.md` is opgeheven); datum-getriggerde acties leven in OmniFocus.
 
 5. **Stale-kandidaten** — korte lijst van ⚪-vragen die weg kunnen, met per regel de reden (superseded door welke bron / te vaag).
 
-Sluit af met: "Deze agent schrijft niet. Om op te volgen: geef de review-queue-regels en de resolvable-now-werklijst als instructie aan de hoofd-wiki-agent — die plaatst de regels in `wiki/review-queue.md` (met echte datum) en handelt de 🟢-vragen af."
+Sluit af met: "Deze agent schrijft niet. Om op te volgen: geef de OmniFocus-kandidaten en de resolvable-now-werklijst als instructie aan de hoofd-wiki-agent — die zet de kandidaten met echte datum in OmniFocus (skill `plan-to-omnifocus`) en handelt de 🟢-vragen af."
 
 ## Error handling
 

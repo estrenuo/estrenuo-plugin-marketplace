@@ -121,7 +121,7 @@ class WikiIndex:
         paths: list[Path] = []
         for d in PAGE_DIRS:
             paths.extend(sorted((WIKI / d).glob("*.md")))
-        # Top-level wiki pages (review-queue, sources-index, context-log, …) are
+        # Top-level wiki pages (sources-index, context-log, …) are
         # linkable too; Obsidian resolves them despite living outside PAGE_DIRS.
         paths.extend(sorted(WIKI.glob("*.md")))
         for p in paths:
