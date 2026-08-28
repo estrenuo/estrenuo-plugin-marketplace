@@ -12,7 +12,7 @@ description: |
   Niet voor: bestaande wiki-content opvragen (→ wiki-query), bronnen uit raw/
   verwerken (→ wiki-ingest), health-check (→ wiki-lint), wiki-overzicht
   (→ wiki-explore).
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, Task, mcp__qmd__query, mcp__qmd__update
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, Task, mcp__plugin_myrag-wiki_qmd-feat__query, mcp__plugin_myrag-wiki_qmd-feat__update
 ---
 
 # autoresearch — Autonome research-loop voor myrag-wiki
@@ -71,7 +71,7 @@ Maak vóór de loop een kebab-case slug van het topic (bv. "Data Vault 2.0" →
 topic heeft:
 
 ```
-mcp__qmd__query searches=[
+mcp__plugin_myrag-wiki_qmd-feat__query searches=[
   {type: 'lex', query: '<kernterm uit topic>'},
   {type: 'vec', query: '<topic in natuurlijke taal>'}
 ] intent='check of dit topic al gedekt is voor autoresearch'
@@ -341,7 +341,7 @@ Type is **`analysis`** (myrag-canoniek), niet `autoresearch`.
 
 **5.4 — `qmd update`**
 
-Roep `mcp__qmd__update` aan om de qmd-collection te re-indexen met de nieuwe
+Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan om de qmd-collection te re-indexen met de nieuwe
 pagina's. Zonder deze stap zijn de pagina's onvindbaar via `wiki-query`.
 
 ---

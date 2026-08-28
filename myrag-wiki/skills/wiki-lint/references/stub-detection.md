@@ -42,7 +42,7 @@ Lees de stub-pagina. Het onderwerp staat in:
 
 ### Stap C — Bevraag de wiki per stub
 
-Roep `mcp__qmd-feat__query` aan voor elke stub met:
+Roep `mcp__plugin_myrag-wiki_qmd-feat__query` aan voor elke stub met:
 
 ```
 searches: [{type: 'lex', query: '<title>'}, {type: 'vec', query: '<title>'}]

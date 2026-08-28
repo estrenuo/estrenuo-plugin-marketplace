@@ -221,20 +221,20 @@ De `wiki-start` skill automatiseert dit protocol.
 
 ### qmd — lokale wiki-zoekmachine (MCP)
 
-Deze plugin gebruikt de [estrenuo/qmd fork](https://github.com/estrenuo/qmd), die MCP-tools `update` en `embed` toevoegt aan upstream qmd. De server staat in `.mcp.json` van de plugin geregistreerd als `qmd-feat` en biedt hybride search over alle wiki-pagina's: BM25 + vector-embeddings + LLM reranking, volledig on-device. **Upstream qmd werkt niet** — de skills roepen `mcp__qmd-feat__update` en `mcp__qmd-feat__query` aan.
+Deze plugin gebruikt de [estrenuo/qmd fork](https://github.com/estrenuo/qmd), die MCP-tools `update` en `embed` toevoegt aan upstream qmd. De server staat in `.mcp.json` van de plugin geregistreerd als `qmd-feat` en biedt hybride search over alle wiki-pagina's: BM25 + vector-embeddings + LLM reranking, volledig on-device. **Upstream qmd werkt niet** — de skills roepen `mcp__plugin_myrag-wiki_qmd-feat__update` en `mcp__plugin_myrag-wiki_qmd-feat__query` aan.
 
 **Collectie:** `wiki/` (set up via `qmd init` in de vault root).
 
-**Primaire MCP-tools (`mcp__qmd-feat__*`):**
+**Primaire MCP-tools (`mcp__plugin_myrag-wiki_qmd-feat__*`):**
 - `query` — hybrid search (BM25 + vector + reranking) via sub-queries `lex`/`vec`/`hyde`
 - `update` — re-index na wijzigingen in `wiki/`
 - `embed` — genereer vector embeddings voor pagina's die ze nodig hebben
 - `get` / `multi_get` — pagina-inhoud ophalen op pad/glob
 - `status` — index-status bekijken
 
-**Wanneer `mcp__qmd-feat__update` aanroepen:**
+**Wanneer `mcp__plugin_myrag-wiki_qmd-feat__update` aanroepen:**
 - Na elke ingest (laatste stap van de ingest-workflow)
 - Na het filen van een analyse-antwoord (laatste stap van de query-workflow)
 - Na een lint-pass die pagina's heeft gewijzigd
 
-**Embeddings:** bij de eerste `qmd embed` run (CLI) of `mcp__qmd-feat__embed` (MCP) worden ~2GB aan lokale modellen gedownload naar `~/.cache/qmd/models/`. Daarna incrementeel via `mcp__qmd-feat__update`.
+**Embeddings:** bij de eerste `qmd embed` run (CLI) of `mcp__plugin_myrag-wiki_qmd-feat__embed` (MCP) worden ~2GB aan lokale modellen gedownload naar `~/.cache/qmd/models/`. Daarna incrementeel via `mcp__plugin_myrag-wiki_qmd-feat__update`.

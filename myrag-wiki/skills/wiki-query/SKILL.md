@@ -32,7 +32,7 @@ Voer alle stappen in volgorde uit. Sla geen stap over.
 
 **Stap 1: Bevraag qmd (primaire retrieval)**
 
-Roep de qmd `query`-tool aan — `mcp__plugin_myrag-wiki_qmd-feat__query` (of `mcp__qmd-feat__query` als qmd via project-MCP i.p.v. de plugin geladen is) — met minimaal twee sub-queries:
+Roep de qmd `query`-tool aan — `mcp__plugin_myrag-wiki_qmd-feat__query` (of `mcp__plugin_myrag-wiki_qmd-feat__query` als qmd via project-MCP i.p.v. de plugin geladen is) — met minimaal twee sub-queries:
 
 ```
 searches=[
@@ -159,6 +159,6 @@ Formaat one-liner:
 
 **5.5 — Roep de qmd `update`-tool aan**
 
-Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan (of `mcp__qmd-feat__update` bij project-MCP) zodat de nieuwe pagina direct doorzoekbaar is.
+Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan (of `mcp__plugin_myrag-wiki_qmd-feat__update` bij project-MCP) zodat de nieuwe pagina direct doorzoekbaar is.
 
 **Waarom:** qmd indexeert niet automatisch — zonder expliciete update-aanroep is de nieuwe pagina onzichtbaar voor toekomstige zoekopdrachten.

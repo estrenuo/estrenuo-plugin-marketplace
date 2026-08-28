@@ -6,7 +6,7 @@ description: |
   "check de wiki", "zijn er kapotte links?", "wiki health", "wiki doorlichten",
   "orphan pages", "broken links controleren", of andere zinnen die expliciet
   verwijzen naar controle van wiki-structuur, links of kwaliteit.
-allowed-tools: Read Grep Bash Edit Write Task mcp__qmd-feat__query mcp__qmd-feat__update
+allowed-tools: Read Grep Bash Edit Write Task mcp__plugin_myrag-wiki_qmd-feat__query mcp__qmd-feat__query mcp__plugin_myrag-wiki_qmd-feat__update mcp__qmd-feat__update
 ---
 
 # wiki-lint
@@ -112,7 +112,7 @@ Volg de procedure in `references/stub-detection.md`:
 
 - **Stap A**: Vind alle stub-bestanden via Grep op `tags: [stub]`
 - **Stap B**: Bepaal het onderwerp per stub (uit `title:` frontmatter)
-- **Stap C**: Bevraag de wiki per stub via `mcp__qmd-feat__query` (drempel: ≥2 resultaten, score ≥0.5, niet-stubs)
+- **Stap C**: Bevraag de wiki per stub via `mcp__plugin_myrag-wiki_qmd-feat__query` (drempel: ≥2 resultaten, score ≥0.5, niet-stubs)
 - **Stap D**: Noteer de top-3 bronnen per vulbare stub
 
 Presenteer de lijst aan de gebruiker met het template uit `references/stub-detection.md`.
@@ -193,7 +193,7 @@ Na het uitvoeren van fixes:
 
 ## Stap 5: Herbouw qmd-index na fixes
 
-Na het uitvoeren van fixes: roep `mcp__qmd-feat__update` aan om de qmd-index te herbouwen.
+Na het uitvoeren van fixes: roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan om de qmd-index te herbouwen.
 Dit zorgt dat gefixte pagina's direct doorzoekbaar zijn in toekomstige query-sessies.
 
 **Stap 5 wordt ALLEEN uitgevoerd als er daadwerkelijk fixes zijn gedaan** (stap 4 ≠ "niets").

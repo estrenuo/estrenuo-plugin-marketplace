@@ -85,7 +85,7 @@ Voer voor elke stub op de te-vullen-lijst de volgende stappen uit in exacte volg
    of `wiki/concepts-index.md` (afhankelijk van het type: source vs. concept).
    Format: `- [[slug|Titel]] (datum, auteur) — eerste zin van ## Summary (≤160 tekens)`.
 6. Voeg de stub toe aan de gevuld-lijst voor de log-entry.
-7. **Herbouw qmd-index**: roep `mcp__qmd-feat__update` aan ná de laatste stub in de loop
+7. **Herbouw qmd-index**: roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan ná de laatste stub in de loop
    (niet na elke individuele stub), maar alleen als ≥1 stub daadwerkelijk gevuld is.
 
 Na alle stubs: schrijf één samenvattende entry aan `log.md`:

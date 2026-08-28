@@ -1,8 +1,10 @@
 {
   "mcpServers": {
     "qmd-feat": {
-      "command": "qmd",
-      "args": ["mcp"]
+      "command": "${HOME}/.local/bin/qmd",
+      "args": [
+        "mcp"
+      ]
     }
   }
 }
