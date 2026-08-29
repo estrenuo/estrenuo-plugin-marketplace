@@ -3,7 +3,15 @@
   "owner": {
     "name": "Sander Robijns | Estrenuo"
   },
+  "metadata": {
+    "description": "Claude Code and Cowork plugins for knowledge management and agent workflows."
+  },
   "plugins": [
+    {
+      "name": "hermes-tweet",
+      "source": "./hermes-tweet",
+      "description": "Install, configure, and troubleshoot the Hermes Tweet Xquik plugin from Claude Code."
+    },
     {
       "name": "myrag-wiki",
       "source": "./myrag-wiki",
