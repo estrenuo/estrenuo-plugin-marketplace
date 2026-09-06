@@ -119,6 +119,15 @@ CLUSTERS: list[tuple[str, set[str]]] = [
     ("Cloud & Distributed Systems", {
         "cloud", "open-world-assumption", "monaden", "distributed-systems",
     }),
+    ("Carrière & Arbeidsmarkt", {
+        "carrière", "arbeidsmarkt", "cv", "sollicitatie", "positionering",
+    }),
+    ("Boeken & Naslag", {
+        "boek", "boeken",
+    }),
+    ("Werk & Opdrachtdossiers", {
+        "werk", "technologie", "onderzoek",
+    }),
 ]
 
 SUMMARY_MAX_CHARS = 160
@@ -174,8 +183,30 @@ def page_info(path: Path) -> dict:
     }
 
 
+# Fallback-keywords (2026-09-04): worden pas geraadpleegd als geen enkel cluster
+# hierboven matcht. Reden: `claude-code` en `agentic-os` stonden nergens en zulke
+# pagina's vielen via het catch-all `technologie` in "Werk & Opdrachtdossiers".
+# Bewust NIET in de primaire sets, want AI Tools staat vóór Knowledge Management
+# en Software Engineering; daar toevoegen verplaatste 10 pagina's die daar terecht
+# stonden (Obsidian/memory-pagina's, website-builds). Het fallback-pad raakt alleen
+# pagina's die anders in Werk of Overig zouden landen. Cluster-namen moeten
+# letterlijk overeenkomen met een naam in CLUSTERS.
+FALLBACK_CLUSTERS: list[tuple[str, set[str]]] = [
+    ("AI Tools & Prompt Engineering", {"claude-code", "agentic-os", "claude-mem", "memory-systems"}),
+    ("Software Engineering & Tooling", {"docker", "self-hosting", "synology", "nas"}),
+]
+
+_CATCH_ALL = {"technologie", "onderzoek"}
+
+
 def cluster_for(tags: list[str]) -> str:
     tag_set = {t.lower() for t in tags}
+    for name, keywords in CLUSTERS:
+        if tag_set & keywords & (keywords - _CATCH_ALL if name == CLUSTERS[-1][0] else keywords):
+            return name
+    for name, keywords in FALLBACK_CLUSTERS:
+        if tag_set & keywords:
+            return name
     for name, keywords in CLUSTERS:
         if tag_set & keywords:
             return name
