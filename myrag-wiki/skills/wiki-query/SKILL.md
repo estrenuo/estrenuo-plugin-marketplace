@@ -126,7 +126,7 @@ sources: [source-slug-1, source-slug-2]
 - [[source-slug|Brontitel]]
 ```
 
-De `## Summary`-sectie is verplicht. Zonder Summary kan `scripts/regen-quick-indexes.py` de pagina niet verwerken.
+De `## Summary`-sectie is verplicht. Zonder Summary kan `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` de pagina niet verwerken.
 
 **Waarom:** Gestandaardiseerde frontmatter en secties zorgen dat de pagina vindbaar is via qmd, correct wordt weergegeven in de quick-indexes, en consistent is met de rest van de wiki.
 
