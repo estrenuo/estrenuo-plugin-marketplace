@@ -1,0 +1,21 @@
+name: release-gate
+
+# Verplichte check op elke PR naar main (branch protection: "version-bump").
+# Gewijzigde plugin => plugin.json-versie omhoog, tag nog vrij, SKILL.md-descriptions sync-proof.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check version bump
+        run: python3 scripts/check-version-bump.py "origin/${{ github.base_ref }}"

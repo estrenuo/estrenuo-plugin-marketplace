@@ -86,15 +86,16 @@ if [[ "$ALLOW_DIRTY" -eq 0 ]]; then
   fi
 fi
 
-# Check 7: op main branch
+# Check 7: NIET op main — main is beschermd, releases gaan via PR + merge
 CURRENT_BRANCH=$(git branch --show-current)
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  error_exit "not on main branch (on: ${CURRENT_BRANCH}) — switch to main first"
+if [[ -z "$CURRENT_BRANCH" || "$CURRENT_BRANCH" == "main" ]]; then
+  error_exit "on main (or detached) — bump on a feature branch: git switch -c release/${PLUGIN}-<versie>"
 fi
 
-# Check 8: tag bestaat nog niet (lokaal)
+# Check 8: tag bestaat nog niet (lokaal of op origin)
 TAG="${PLUGIN}/v${NEW}"
-if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
+if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null \
+   || git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
   error_exit "tag ${TAG} already exists"
 fi
 
@@ -120,15 +121,14 @@ if ! git commit -m "${PLUGIN}: bump to ${NEW}"; then
 fi
 COMMIT_SHA=$(git rev-parse --short HEAD)
 
-if ! git tag -a "$TAG" -m "${PLUGIN} v${NEW}"; then
-  error_exit "tag failed; commit ${COMMIT_SHA} exists, run 'git tag -a ${TAG} -m \"${PLUGIN} v${NEW}\"' manually"
-fi
-
-# Success output
+# Geen tag hier: de tag-release-workflow zet ${TAG} na de merge op main.
 cat <<EOF
 ✓ Bumped ${PLUGIN}: ${CURRENT} → ${NEW}
-✓ Committed: ${COMMIT_SHA}
-✓ Tagged: ${TAG}
+✓ Committed: ${COMMIT_SHA} op ${CURRENT_BRANCH}
 
-Push: git push origin main --follow-tags
+Volgende stappen:
+  git push -u origin ${CURRENT_BRANCH}
+  gh pr create --base main --title "${PLUGIN}: ${NEW}" --body "<MAJOR|MINOR|PATCH>: <waarom>"
+  gh pr merge --merge --delete-branch   # na groene release-gate
+Daarna: tag ${TAG} wordt automatisch gezet; Cowork-marketplace handmatig re-syncen.
 EOF
