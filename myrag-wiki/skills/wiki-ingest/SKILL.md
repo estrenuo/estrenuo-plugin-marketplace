@@ -14,7 +14,7 @@ description: |
   - algemene wiki-overzichten of grafiekanalyses (→ wiki-explore)
 
   Typische triggers: "ingest", "verwerk bronnen", "nieuwe bestanden verwerken",
-  "voeg dit toe aan de wiki", "ingest <bestandsnaam>", "verwerk nieuwe bronnen",
+  "voeg dit toe aan de wiki", "ingest" plus een bestandsnaam, "verwerk nieuwe bronnen",
   "scan de raw-map", "verwerk dit artikel", of informele varianten daarvan.
 allowed-tools: Read, Write, Edit, Bash, Task, WebFetch, mcp__plugin_myrag-wiki_qmd-feat__update, mcp__qmd-feat__update, mcp__plugin_context7_context7__query-docs, mcp__plugin_context7_context7__resolve-library-id
 ---

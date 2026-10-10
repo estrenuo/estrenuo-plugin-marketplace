@@ -110,7 +110,9 @@ vóór het algemene rapport gepresenteerd wordt.
 
 Volg de procedure in `references/stub-detection.md`:
 
-- **Stap A**: Vind alle stub-bestanden via Grep op `tags: [stub]`
+- **Stap A**: Vind alle stub-bestanden via Grep op de tag `stub` binnen de
+  `tags:`-lijst (zie `references/stub-detection.md` Stap A voor het exacte
+  patroon — niet beperkt tot single-tag `tags: [stub]`)
 - **Stap B**: Bepaal het onderwerp per stub (uit `title:` frontmatter)
 - **Stap C**: Bevraag de wiki per stub via `mcp__plugin_myrag-wiki_qmd-feat__query` (drempel: ≥2 resultaten, score ≥0.5, niet-stubs)
 - **Stap D**: Noteer de top-3 bronnen per vulbare stub
