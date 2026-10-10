@@ -80,68 +80,65 @@ houdt versielijnen onafhankelijk zodra er meer dan één plugin bestaat.
 
 ## Release-workflow
 
+`main` is beschermd: directe pushes worden geweigerd, ook voor admins.
+Elke wijziging landt via een pull request met een groene `version-bump`-check
+(workflow `release-gate`). Raakt een PR bestanden van een plugin, dan moet
+die PR ook de versie van die plugin verhogen.
+
 Voor een plugin-release:
 
 1. Bepaal het type bump (MAJOR / MINOR / PATCH) op basis van
    bovenstaande regels.
-2. Voer het bump-script uit op `main`, op een schone working tree:
+2. Werk op een feature-branch, nooit op `main`:
+
+   ```bash
+   git switch -c release/<plugin-name>-<x.y.z> origin/main
+   ```
+
+3. Commit je wijzigingen en draai het bump-script op die branch:
 
    ```bash
    scripts/bump-plugin.sh <plugin-name> <patch|minor|major>
    ```
 
-   Voorbeeld:
+   Het script weigert te draaien op `main`, muteert `version` in
+   `<plugin>/.claude-plugin/plugin.json` en maakt een commit. Het zet
+   **geen** tag meer. Met `--allow-dirty` neemt de bump-commit ook al
+   gestagede wijzigingen mee.
+
+4. Push de branch en open een PR:
 
    ```bash
-   scripts/bump-plugin.sh myrag-wiki minor
+   git push -u origin release/<plugin-name>-<x.y.z>
+   gh pr create --base main --title "<plugin>: <x.y.z>" --body "PATCH: <waarom>"
    ```
 
-   Het script muteert `version` in `<plugin>/.claude-plugin/plugin.json`,
-   maakt een commit en plaatst een annotated tag `<plugin>/v<x.y.z>`.
+5. De `release-gate` controleert met `scripts/check-version-bump.py`:
+   - de versie is hoger dan op `main` en de tag is nog vrij;
+   - elke `SKILL.md`-description heeft geen punthaken en is maximaal
+     1024 tekens (anders past de claude.ai-sync hem stil aan).
 
-   Bij succes verschijnt een blok als:
+   Lokaal vooraf checken: `python3 scripts/check-version-bump.py origin/main`.
 
-   ```text
-   ✓ Bumped myrag-wiki: 0.1.0 → 0.2.0
-   ✓ Committed: a1b2c3d
-   ✓ Tagged: myrag-wiki/v0.2.0
-
-   Push: git push origin main --follow-tags
-   ```
-
-   Faalt het script met `working tree not clean`, commit dan eerst je
-   andere wijzigingen óf gebruik `--allow-dirty` (zie onder). Faalt het
-   met `tag … already exists`, dan is die versielijn al gepubliceerd —
-   kies een hoger bump-type of corrigeer de huidige `version` in
-   `plugin.json` voor je opnieuw bumpt.
-
-3. Push wijzigingen en tag:
+6. Merge met een merge-commit (geen squash, zodat de historie intact blijft):
 
    ```bash
-   git push origin main --follow-tags
+   gh pr merge --merge --delete-branch
    ```
 
-4. Optioneel: schrijf een release-note op de bijbehorende GitHub release.
-
-Gebruik `--allow-dirty` wanneer de bump samen met andere code-changes
-moet landen (bijvoorbeeld: feature-implementatie en versie-bump in
-dezelfde release-commit):
-
-```bash
-git add <files-die-mee-moeten>
-scripts/bump-plugin.sh myrag-wiki minor --allow-dirty
-```
-
-Het script slaat dan de clean-tree-check over. De bump-commit bevat
-`plugin.json` plus alles wat je al gestaged hebt; ongestagede
-wijzigingen blijven onaangeroerd in je working tree.
+7. De workflow `tag-release` zet na de merge automatisch
+   `<plugin>/v<x.y.z>` op de merge-commit.
+8. Re-sync de marketplace in claude.ai (Aanpassingen → Plug-ins → Voeg toe →
+   Beheer marketplaces → ⋮ → Controleer op updates), zodat Cowork de nieuwe
+   versie krijgt. Auto-sync op GitHub-wijzigingen is niet betrouwbaar gebleken.
 
 ## Pull requests
 
 - Werk op een feature-branch en open een PR tegen `main`.
 - Houd PR's klein en gefocust op één plugin tegelijk.
 - Beschrijf in de PR welk type bump (MAJOR / MINOR / PATCH) van toepassing is
-  en waarom, zodat de tag na merge eenduidig vastligt.
-- De versie-bump in `plugin.json` mag in dezelfde PR zitten of als
-  losse follow-up commit op `main` direct na merge — kies één lijn en
-  houd je daaraan.
+  en waarom.
+- De versie-bump zit altijd in dezelfde PR als de wijziging; de
+  `release-gate` dwingt dat af.
+- Wijzigingen die alleen repo-tooling raken (CI, scripts, docs) hebben geen
+  bump nodig.
