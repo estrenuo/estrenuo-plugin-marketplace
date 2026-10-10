@@ -11,12 +11,9 @@ description: |
   we") — die horen bij session-briefing, de eenduidige eigenaar van
   sessiestart. Vereis een expliciete verwijzing naar de wiki.
 
-  Deze skill is verplicht — niet optioneel — omdat het session start
-  protocol 6 geordende stappen heeft die elk een specifiek doel
-  dienen. CLAUDE.md staat al in de context, maar die context alleen
-  garandeert niet dat alle stappen worden uitgevoerd; zonder skill
-  worden stappen samengevat, samengevoegd of overgeslagen. De skill
-  dwingt de volledige volgorde af.
+  Verplicht, niet optioneel: het sessiestart-protocol heeft 6 geordende
+  stappen en zonder deze skill worden stappen samengevat of
+  overgeslagen. De skill dwingt de volledige volgorde af.
 
   Als deze skill en CLAUDE.md conflicteren, heeft CLAUDE.md voorrang.
   Volg de expliciete instructies in CLAUDE.md en pas deze skill alleen
