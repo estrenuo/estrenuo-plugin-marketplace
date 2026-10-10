@@ -10,17 +10,17 @@ Claude Code detecteert plugin-updates via **git refs (tags/commits)**, niet via 
 
 ## Per-plugin versioning en releasen
 
-Elke plugin heeft een eigen versielijn (semver in `<plugin>/.claude-plugin/plugin.json`) en eigen tag-prefix. Releasen gaat via `scripts/bump-plugin.sh`:
+Elke plugin heeft een eigen versielijn (semver in `<plugin>/.claude-plugin/plugin.json`) en eigen tag-prefix. Releasen gaat via een PR. `main` is beschermd (directe pushes geweigerd, ook voor admins; verplichte check `version-bump`):
 
 ```bash
-scripts/bump-plugin.sh <plugin> <patch|minor|major>          # vanaf schone main
-scripts/bump-plugin.sh <plugin> <bump> --allow-dirty         # bundelen met andere staged changes
-git push origin main --follow-tags
+git switch -c release/<plugin>-<x.y.z> origin/main
+scripts/bump-plugin.sh <plugin> <patch|minor|major>          # weigert op main
+scripts/bump-plugin.sh <plugin> <bump> --allow-dirty         # bundelen met gestagede changes
+git push -u origin release/<plugin>-<x.y.z>
+gh pr create --base main && gh pr merge --merge --delete-branch
 ```
 
-Het script doet pre-flight checks (plugin geregistreerd in `marketplace.json`, op `main`, schone working tree, geldig semver, tag bestaat nog niet, `python3` aanwezig), muteert `plugin.json` (Python-based JSON edit, behoudt UTF-8 / accenten), maakt commit + annotated tag `<plugin>/v<x.y.z>`. Het pusht **niet** automatisch.
-
-Wat MAJOR vs. MINOR vs. PATCH betekent voor een Claude Code plugin (verwijderde of hernoemde skill = MAJOR, gewijzigde trigger-conditie die bestaande prompts breekt = MAJOR, MCP-prefix rename = MAJOR, nieuwe skill = MINOR) staat uitgewerkt in `CONTRIBUTING.md`. Pre-1.0 (`0.x.y`) mag breaking changes via MINOR.
+Het script doet pre-flight checks (plugin geregistreerd in `marketplace.json`, niet op `main`, schone working tree, geldig semver, tag bestaat nog niet lokaal of op origin, `python3` aanwezig), muteert `plugin.json` en maakt een commit. Het tagt niet: de workflow `tag-release` zet `<plugin>/v<x.y.z>` na de merge op `main`. De workflow `release-gate` draait `scripts/check-version-bump.py`: gewijzigde plugin zonder versie-bump, bezette tag, of een `SKILL.md`-description met punthaken of langer dan 1024 tekens laat de PR falen. Na de merge: Cowork-marketplace handmatig re-syncen in claude.ai.
 
 ## Repo-layout
 

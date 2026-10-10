@@ -1,0 +1,34 @@
+name: tag-release
+
+# Na een merge naar main: zet voor elke plugin de tag <plugin>/v<versie>
+# als die nog niet bestaat. Tags horen op main-commits, niet op feature-branches.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create missing plugin tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for name in $(python3 -c "import json;print(' '.join(p['name'] for p in json.load(open('.claude-plugin/marketplace.json'))['plugins']))"); do
+            version=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['version'])" "$name/.claude-plugin/plugin.json")
+            tag="$name/v$version"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+              echo "$tag bestaat al"
+            else
+              git tag -a "$tag" -m "$name v$version"
+              git push origin "refs/tags/$tag"
+              echo "::notice::tag $tag aangemaakt op $(git rev-parse --short HEAD)"
+            fi
+          done
