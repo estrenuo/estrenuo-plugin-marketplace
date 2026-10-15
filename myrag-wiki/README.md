@@ -72,8 +72,8 @@ niet in `CLAUDE.md`.
 ## Vereisten
 
 - Obsidian-vault met `CLAUDE.md`, `index.md`, `log.md`, `raw/`, `wiki/` (zie Vault bootstrap hierboven)
-- qmd CLI geïnstalleerd, met de **estrenuo/qmd fork** (<https://github.com/estrenuo/qmd>) — deze fork voegt MCP-tools `update` en `embed` toe die de skills nodig hebben. Upstream qmd werkt **niet** met deze plugin.
-- De MCP-server staat in `.mcp.json` geregistreerd als `qmd-feat` en start automatisch wanneer de plugin enabled is. Het commando is `${HOME}/.local/bin/qmd`, een absoluut pad in plaats van een PATH-lookup: Claude Code start ook vanuit de Desktop-app, waar `~/.local/bin` niet altijd in PATH zit. Zorg dus dat de qmd-binary daar staat of daarheen symlinkt.
+- qmd CLI geïnstalleerd (upstream, <https://github.com/tobi/qmd>). De skills zoeken via de MCP-server en herindexeren via Bash met `qmd update && qmd embed`; een fork is niet meer nodig.
+- De MCP-server staat in `.mcp.json` geregistreerd als `qmd-feat` (historische naam) en start automatisch wanneer de plugin enabled is. Het commando is `${HOME}/.local/bin/qmd`, een absoluut pad in plaats van een PATH-lookup: Claude Code start ook vanuit de Desktop-app, waar `~/.local/bin` niet altijd in PATH zit. Zorg dus dat de qmd-binary daar staat of daarheen symlinkt. De skills roepen de CLI om dezelfde reden aan via `"$HOME/.local/bin/qmd"`.
 - Python 3 voor `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`
   (script wordt vanuit de vault root aangeroepen; vindt `wiki/` via cwd of via een vault-pad als argv[1])
 
