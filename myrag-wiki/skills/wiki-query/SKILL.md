@@ -21,7 +21,7 @@ description: |
   Grijze zone: als de vraag een eigennaam of concept bevat waarover
   inhoud verwacht kan worden → wiki-query. Als de vraag over de wiki
   als systeem gaat → wiki-explore.
-allowed-tools: Read Write Edit Task mcp__plugin_myrag-wiki_qmd-feat__query mcp__plugin_myrag-wiki_qmd-feat__update mcp__plugin_myrag-wiki_qmd-feat__get mcp__qmd-feat__query mcp__qmd-feat__update mcp__qmd-feat__get
+allowed-tools: Read Write Edit Task Bash mcp__plugin_myrag-wiki_qmd-feat__query mcp__plugin_myrag-wiki_qmd-feat__get mcp__qmd-feat__query mcp__qmd-feat__get
 ---
 
 # Wiki Query — 5-staps checklist
@@ -157,8 +157,8 @@ Formaat one-liner:
 
 **Waarom:** Quick-indexes geven per-rij context zodat de query-workflow later de juiste 3-5 pagina's kan selecteren zonder tientallen pagina's te openen.
 
-**5.5 — Roep de qmd `update`-tool aan**
+**5.5 — Draai `qmd update` en `qmd embed`**
 
-Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan (of `mcp__plugin_myrag-wiki_qmd-feat__update` bij project-MCP) zodat de nieuwe pagina direct doorzoekbaar is.
+Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` zodat de nieuwe pagina direct doorzoekbaar is.
 
 **Waarom:** qmd indexeert niet automatisch — zonder expliciete update-aanroep is de nieuwe pagina onzichtbaar voor toekomstige zoekopdrachten.

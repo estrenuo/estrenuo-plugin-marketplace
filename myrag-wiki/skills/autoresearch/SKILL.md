@@ -12,7 +12,7 @@ description: |
   Niet voor: bestaande wiki-content opvragen (→ wiki-query), bronnen uit raw/
   verwerken (→ wiki-ingest), health-check (→ wiki-lint), wiki-overzicht
   (→ wiki-explore).
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, Task, mcp__plugin_myrag-wiki_qmd-feat__query, mcp__plugin_myrag-wiki_qmd-feat__update
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, Task, mcp__plugin_myrag-wiki_qmd-feat__query
 ---
 
 # autoresearch — Autonome research-loop voor myrag-wiki
@@ -339,10 +339,10 @@ Format volgens myrag log-conventies (`## [YYYY-MM-DD] type | Title`):
 
 Type is **`analysis`** (myrag-canoniek), niet `autoresearch`.
 
-**5.4 — `qmd update`**
+**5.4 — `qmd update` en `qmd embed`**
 
-Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan om de qmd-collection te re-indexen met de nieuwe
-pagina's. Zonder deze stap zijn de pagina's onvindbaar via `wiki-query`.
+Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` om de qmd-collection te re-indexen en de nieuwe
+pagina's te embedden. Zonder deze stap zijn de pagina's onvindbaar via `wiki-query`.
 
 ---
 

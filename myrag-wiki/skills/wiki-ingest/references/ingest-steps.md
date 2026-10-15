@@ -109,7 +109,7 @@ Het script is idempotent: leest alle pagina's in `wiki/sources/`, `wiki/recipes/
 
 ## Stap 10: Re-index qmd (post-batch)
 
-Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan zodat alle nieuwe en gewijzigde pagina's direct doorzoekbaar zijn. Dit is altijd de laatste stap — ook als er maar één pagina is gewijzigd. Deze stap is altijd de laatste — in regenerate-modus draait Stap 9.5 vóór deze stap, in patch-modus is Stap 9.5 niet van toepassing.
+Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` zodat alle nieuwe en gewijzigde pagina's direct doorzoekbaar zijn, ook via vector-search (`update` herindexeert BM25, `embed` vult de vectoren aan voor wat nieuw of gewijzigd is). Dit is altijd de laatste stap — ook als er maar één pagina is gewijzigd. Deze stap is altijd de laatste — in regenerate-modus draait Stap 9.5 vóór deze stap, in patch-modus is Stap 9.5 niet van toepassing.
 
 ---
 

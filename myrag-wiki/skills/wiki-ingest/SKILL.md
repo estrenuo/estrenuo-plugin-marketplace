@@ -16,7 +16,7 @@ description: |
   Typische triggers: "ingest", "verwerk bronnen", "nieuwe bestanden verwerken",
   "voeg dit toe aan de wiki", "ingest" plus een bestandsnaam, "verwerk nieuwe bronnen",
   "scan de raw-map", "verwerk dit artikel", of informele varianten daarvan.
-allowed-tools: Read, Write, Edit, Bash, Task, WebFetch, mcp__plugin_myrag-wiki_qmd-feat__update, mcp__qmd-feat__update, mcp__plugin_context7_context7__query-docs, mcp__plugin_context7_context7__resolve-library-id
+allowed-tools: Read, Write, Edit, Bash, Task, WebFetch, mcp__plugin_context7_context7__query-docs, mcp__plugin_context7_context7__resolve-library-id
 ---
 
 # wiki-ingest
@@ -164,7 +164,7 @@ Volledige stappen met why-zinnen en format-specs in `references/ingest-steps.md`
 8. Append aan log.md (type: ingest of update)
 9. Update wiki/ingest-state.md (mtime, hash, wikilink met `\|`-escape, datum)
 9.5. (Regenerate-modus, post-batch) Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
-10. Roep `mcp__plugin_myrag-wiki_qmd-feat__update` aan — altijd als laatste stap, post-batch
+10. Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` — altijd als laatste stap, post-batch
 
 **Multi-page geval:** Als Modified bestand meerdere wikilinks heeft in de Source page cel, voer dan de multi-page dialoog uit vóór stap 2. Details in `references/ingest-steps.md`.
 
