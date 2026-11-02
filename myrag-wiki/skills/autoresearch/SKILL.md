@@ -119,26 +119,16 @@ Loop-constraints (uit `references/program.md`):
 
 ---
 
-## Stap 3 — Bepaal index-modus (myrag INGS-01)
+## Stap 3 — Quick-indexes: één eigenaar (myrag INGS-01)
 
-Tel het aantal nieuwe wiki-pagina's dat je gaat aanmaken (sources + concepts
-+ entities + 1 synthesis). Op basis daarvan:
+`wiki/sources-index.md` en `wiki/concepts-index.md` worden alleen geschreven
+door `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`. Bewerk ze nooit
+met de hand, ook niet voor één pagina: de volgende run overschrijft
+handwerk. Het script draait één keer aan het einde, in Stap 5.1. Het neemt
+ook de synthesis-pagina in `wiki/analysis/` mee (sectie "Analyses").
 
-- **count >= 3** → **regenerate-modus**: schrijf de pagina's, sla per-file
-  patches van `wiki/sources-index.md` en `wiki/concepts-index.md` over, en
-  draai aan het einde van Stap 5 eenmalig
-  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`.
-- **count == 1 of 2** → **patch-modus**: patch `wiki/sources-index.md` en
-  `wiki/concepts-index.md` direct per nieuwe pagina in Stap 4.
-
-Annonceer expliciet vóór Stap 4:
-```
-Index-modus: regenerate (count=N ≥ 3) — script wordt na batch aangeroepen
-```
-of
-```
-Index-modus: patch (count=N < 3) — per-file patches in Stap 4
-```
+Tel wel het aantal nieuwe wiki-pagina's (sources + concepts + entities + 1
+synthesis) voor het rapport en de limiet uit `references/program.md`.
 
 ---
 
@@ -301,20 +291,15 @@ sources-index. Houd het scherp — geen hedging.>
 
 Volgorde — sla geen stap over.
 
-**5.1 — Update `wiki/sources-index.md` en `wiki/concepts-index.md`**
+**5.1 — Regenereer `wiki/sources-index.md` en `wiki/concepts-index.md`**
 
-Volgens de index-modus uit Stap 3:
-- **regenerate**: draai eenmalig
-  ```bash
-  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"
-  ```
-- **patch**: voor elke nieuwe source/concept-pagina, voeg een regel toe in
-  het juiste cluster van het juiste index-bestand. Format:
-  ```
-  - [[<slug>|<Title>]] (<date>, <author>) — <eerste zin van ## Summary, max 160 chars>
-  ```
-  Sources gegroepeerd per cluster (uit `tags:`), gesorteerd op datum
-  (nieuwste eerst). Concepts alfabetisch.
+Draai eenmalig, vanuit de vault root:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"
+```
+Het script leest frontmatter en de eerste zin van `## Summary` van elke
+pagina. Daarom is die eerste zin (≤160 tekens) belangrijk. Nooit met de
+hand regels toevoegen.
 
 **5.2 — Update `index.md`**
 
@@ -353,7 +338,7 @@ Korte, neutrale samenvatting in chat. Geen marketing-taal.
 ```
 Research klaar: <Topic>
 
-Rondes: N | Queries: N | Nieuwe pagina's: N | Index-modus: <patch|regenerate>
+Rondes: N | Queries: N | Nieuwe pagina's: N
 
 Aangemaakt:
   wiki/analysis/research-<topic-slug>.md  (synthesis)
@@ -367,7 +352,7 @@ Kernbevindingen:
 - <Bevinding 3>
 
 Open vragen gefiled: N
-Quick-indexes bijgewerkt: <patch|regenerate>
+Quick-indexes: geregenereerd
 qmd update: gedraaid
 ```
 

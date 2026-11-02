@@ -89,8 +89,9 @@ Dit is een harde gate — sla hem nooit over, ook niet bij een "evident" antwoor
 `subagent_type: analysis-filer` en plak de volledige Q&A-tekst (vraag + antwoord
 inclusief alle wikilinks) **letterlijk** in de invocation prompt. De agent heeft
 geen toegang tot deze conversatie-context, dus de Q&A-tekst moet expliciet in de
-prompt staan. De agent doet substappen 5.1 t/m 5.5 in één keer en presenteert
-een draft ter goedkeuring vóór schrijven.
+prompt staan. De agent doet substappen 5.1 t/m 5.3 in één keer en presenteert
+een draft ter goedkeuring vóór schrijven. Na de agent voer jij zelf 5.4 en 5.5
+uit.
 
 Alleen als de gebruiker de delegatie afwijst of als de agent niet beschikbaar is,
 voer je de vijf substappen hieronder handmatig uit.
@@ -145,17 +146,14 @@ Voeg aan het einde van `log.md` toe:
 
 **Waarom:** log.md is append-only chronologisch record. Iedere wijziging aan de wiki hoort erin.
 
-**5.4 — Voeg een one-liner toe aan de juiste quick-index**
+**5.4 — Regenereer de quick-indexes**
 
-Beslisregel:
-- Synthese die uitleg geeft over een named concept (bijv. een diepgaande beschrijving van Data Vault 2.0) → `wiki/concepts-index.md`
-- Synthese die bronnen vergelijkt of een procedurele Q&A beantwoordt (bijv. een PRD-werkwijze) → `wiki/sources-index.md`
-- Bij twijfel: `wiki/sources-index.md`
+Draai via Bash, vanuit de vault root:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
 
-Formaat one-liner:
-`- [[kebab-slug|Title]] (YYYY-MM-DD) — eerste zin van ## Summary (≤160 tekens)`
+Het script neemt de nieuwe pagina op in de sectie "Analyses" van `wiki/sources-index.md`, met de eerste zin van `## Summary`. Bewerk de quick-indexes nooit met de hand: alleen dit script schrijft ze.
 
-**Waarom:** Quick-indexes geven per-rij context zodat de query-workflow later de juiste 3-5 pagina's kan selecteren zonder tientallen pagina's te openen.
+**Waarom:** Quick-indexes geven per-rij context zodat de query-workflow later de juiste 3-5 pagina's kan selecteren zonder tientallen pagina's te openen. Een handregel verdwijnt bij de volgende regen.
 
 **5.5 — Draai `qmd update` en `qmd embed`**
 

@@ -36,14 +36,13 @@ Na classificatie van alle bestanden bereken je:
 
 `count = aantal New + aantal Modified`
 
-Deze count bepaalt de **index-modus** voor de hele batch (zie SKILL.md Stap 2):
-- `count == 0` → geen verwerking, alleen rapport
-- `count >= 3` → regenerate-modus (script aanroepen aan eind van batch)
-- `count >= 1 en count < 3` (dus 1 of 2) → patch-modus (per-file patches in Stap 7)
+Deze count staat in het rapport (zie SKILL.md Stap 2):
+- `count == 0` → geen verwerking, geen regen, alleen rapport
+- `count >= 1` → verwerken, en na de batch eenmalig `regen-quick-indexes.py` draaien
 
 **Multi-page raw telt als 1.** Eén raw-bestand dat meerdere wiki-pagina's voedt is één bron voor deze telling, ongeacht hoeveel pagina's de multi-page-dialoog uiteindelijk update.
 
-**Force-ingest** (`ingest <bestandsnaam>`) heeft altijd `count = 1` → patch-modus.
+**Force-ingest** (`ingest <bestandsnaam>`) heeft altijd `count = 1`.
 
 ## Bash-commando's
 

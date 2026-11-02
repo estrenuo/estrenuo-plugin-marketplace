@@ -46,7 +46,7 @@ Sluit af met: "Klopt dit beeld? Dan schrijf ik de pagina's."
 2. Update/create relevant entity pages in `wiki/entities/`
 3. Update/create relevant concept pages in `wiki/concepts/`
 4. Update `index.md` — add new page entries
-5. Update `wiki/sources-index.md` — add one-liner in the correct cluster
+5. Do **not** edit `wiki/sources-index.md` or `wiki/concepts-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after the batch. Make sure every page you write has a `## Summary` whose first sentence works as a one-liner (≤160 characters).
 6. Append to `log.md`: `## [YYYY-MM-DD] ingest | [Title]` + one-line body
 7. Update `wiki/ingest-state.md`:
    - Run: `stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S" "raw/<filename>"` for mtime

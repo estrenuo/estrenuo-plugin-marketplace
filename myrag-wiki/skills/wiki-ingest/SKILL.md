@@ -65,44 +65,19 @@ Verwerk alleen New en Modified. Vraag bij Deleted altijd bevestiging vóór acti
 
 **Bereken de batch-count (INGS-01):**
 
-`count = aantal New + aantal Modified` — dit is het aantal bronnen dat in deze run verwerkt wordt. Multi-page raws (één raw die meerdere wiki-pagina's voedt) tellen als 1 bron, ongeacht hoeveel wiki-pagina's geüpdatet worden.
+`count = aantal New + aantal Modified` — dit is het aantal bronnen dat in deze run verwerkt wordt. Multi-page raws (één raw die meerdere wiki-pagina's voedt) tellen als 1 bron, ongeacht hoeveel wiki-pagina's geüpdatet worden. De count staat in het rapport; hij bepaalt niets anders.
 
 Force-ingest (`ingest <bestandsnaam>`) heeft altijd `count = 1`.
 
 ---
 
-## Stap 2 — Bepaal index-modus (INGS-01)
+## Stap 2 — Quick-indexes: altijd regenereren (INGS-01)
 
-Bepaal vooraf de index-onderhoudsmodus op basis van batch-count. Gebruik deze eenvoudige tabel:
+`wiki/sources-index.md` en `wiki/concepts-index.md` hebben één eigenaar: het script `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`. Het overschrijft beide bestanden volledig op basis van frontmatter en `## Summary`.
 
-- **count = 0**
-  - Actie: geen ingest, geen index-update, geen qmd update.
-  - Output: alleen het Stap 5-rapport.
-  - Modus: n.v.t.
-- **count = 1 of 2**
-  - Modus: patch-modus
-  - Actie: voer Stap 7 per file uit zoals beschreven in `references/ingest-steps.md`.
-  - Scriptaanroep: nee
-- **count ≥ 3**
-  - Modus: regenerate-modus
-  - Actie: sla Stap 7 per file over
-  - Scriptaanroep: ja, roep na de batch eenmalig `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` aan vóór Stap 10
-
-**Aankondiging:** meld deze modus aan de gebruiker voordat je de batch uitvoert.
-
-Voorbeelden van exacte formulering:
-```
-Index-modus: regenerate (count=N ≥ 3) — script wordt na batch aangeroepen
-```
-en
-```
-Index-modus: patch (count=N < 3) — per-file patches in Stap 7
-```
-
-**Regels:**
-- Force-ingest heeft altijd `count = 1` en valt daarom automatisch onder patch-modus.
-- `count = 3` behoort tot regenerate-modus. `count = 2` behoort tot patch-modus.
-- `count = 0` is een no-op-batch: voer geen ingest-stappen uit, maar genereer wel een rapport.
+- Bewerk de quick-indexes **nooit** met de hand. De volgende run overschrijft handwerk.
+- Bij `count ≥ 1`: draai na de batch eenmalig `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` (Stap 9.5), vóór `qmd update`. Het script schrijft alleen als er iets veranderde en duurt minder dan een seconde.
+- Bij `count = 0`: geen ingest, geen regen, geen qmd update. Alleen het Stap 5-rapport.
 
 ---
 
@@ -112,27 +87,20 @@ Als de gebruiker `ingest <bestandsnaam>` geeft, overschrijft deze stap Stap 1.
 Force-ingest springt direct naar verwerking van het opgegeven bestand zonder
 de detectiepad van Stap 1.
 
-- Als het bestand niet bestaat in `raw/`: geef een foutmelding en stop.
-- Als het bestand meerdere wikilinks heeft in ingest-state.md: voer de
-  multi-page dialoog uit vóór Stap 4.
-- Genereer altijd een volledig rapport via Stap 5.
-- `count = 1` altijd, dus patch-modus.
+Gebruik dit voor geforceerde herverwerking ongeacht mtime/hash-status.
 
-**PDF-bronnen:** delegatie naar `pdf-ingest-agent`.
-
-`ingest <bestandsnaam>` slaat detectie over en verwerkt het opgegeven bestand direct. Gebruik dit voor geforceerde herverwerking ongeacht mtime/hash-status.
-
-- Als het bestand niet bestaat in `raw/`: geef foutmelding, stop — geen verdere stappen.
+- Als het bestand niet bestaat in `raw/`: geef een foutmelding en stop — geen verdere stappen.
 - Als het bestand meerdere wikilinks heeft in ingest-state.md: voer de multi-page dialoog uit vóór Stap 4 (zie Multi-page geval in Stap 4).
 - Genereer altijd een volledig rapport via Stap 5, ook bij force-ingest van één bestand.
-- count = 1 altijd → patch-modus.
+- `count = 1` altijd.
 
 **PDF-bronnen — delegeer naar `pdf-ingest-agent`:** als het te verwerken bestand
 een `.pdf` is (geldt voor zowel auto-modus als force-ingest), roep de Task tool
 aan met `subagent_type: pdf-ingest-agent` en geef het PDF-pad als input. De
 agent doet chunked reading (max 20 pagina's per call) en voert de volledige
-ingest-workflow uit. Sla Stap 4 voor dit specifieke bestand over en neem het
-resultaat van de agent op in het Stap 5-rapport.
+ingest-workflow uit, behalve de quick-indexes. Sla Stap 4 voor dit specifieke
+bestand over en neem het resultaat van de agent op in het Stap 5-rapport. De
+regen in Stap 9.5 draait na de hele batch, ook voor de PDF.
 
 ---
 
@@ -145,11 +113,7 @@ Waarom: fout-abort veroorzaakt onvolledige batches en vereist handmatig herstart
 
 Itereer over de werkverzameling (alle New + Modified bestanden uit Stap 1) en voer voor **elk** bestand de **ingest-stappen 1-9** (uit `references/ingest-steps.md`) sequentieel uit. De gebruiker hoeft het commando niet per bestand te herhalen — de hele batch verwerkt in één run.
 
-De stappen 1-9 worden per bestand uitgevoerd. Stap 9.5 (regenerate, alleen in regenerate-modus) en Stap 10 (qmd update) zijn post-batch stappen — ze draaien eenmalig na afronding van alle bestanden.
-
-In **regenerate-modus** sla Stap 7 (patch quick-indexes in ingest-steps.md) per-file over. In **patch-modus** voer je Stap 7 normaal uit per file.
-
-Na afloop van de batch (in regenerate-modus): roep `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` aan vóór Stap 10 (qmd update in ingest-steps.md).
+De stappen 1-9 worden per bestand uitgevoerd. Stap 9.5 (regen quick-indexes) en Stap 10 (qmd update) zijn post-batch stappen — ze draaien eenmalig na afronding van alle bestanden.
 
 Volledige stappen met why-zinnen en format-specs in `references/ingest-steps.md`.
 
@@ -160,10 +124,10 @@ Volledige stappen met why-zinnen en format-specs in `references/ingest-steps.md`
 4. Update wiki/entities/*.md (nieuwe info, tegenstrijdigheden → ## Open questions)
 5. Update wiki/concepts/*.md (idem) — **Stap 5a: canonical-doc-check verplicht** voor feitelijk-klinkende technische claims uit derivative bronnen over Claude Code, MCP, Task-tool of memory. Eén check per claim vóór schrijven; bij tegenspraak landt de claim onder `## Open questions` in plaats van als feit. Details in `references/ingest-steps.md`.
 6. Update index.md (entry toevoegen of verversen)
-7. Patch wiki/sources-index.md en wiki/concepts-index.md (alleen patch-modus)
+7. (vervallen) Quick-indexes nooit met de hand bewerken — zie Stap 9.5
 8. Append aan log.md (type: ingest of update)
 9. Update wiki/ingest-state.md (mtime, hash, wikilink met `\|`-escape, datum)
-9.5. (Regenerate-modus, post-batch) Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
+9.5. (Post-batch, altijd bij count ≥ 1) Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
 10. Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` — altijd als laatste stap, post-batch
 
 **Multi-page geval:** Als Modified bestand meerdere wikilinks heeft in de Source page cel, voer dan de multi-page dialoog uit vóór stap 2. Details in `references/ingest-steps.md`.
@@ -178,7 +142,7 @@ Zie `references/report-format.md` voor het volledige template.
 Minimaal vereist (INGS-07):
 - **Tellingen:** N nieuw | N bijgewerkt | N ongewijzigd | N verwijderd | N mislukt
 - **Per-bestand uitkomsten:** één tabelrij per bestand (ook ongewijzigde) met uitkomst en eventuele foutmelding
-- **Index-modus:** patch / regenerate / n.v.t. + count + korte rationale
+- **Quick-indexes:** geregenereerd (bijgewerkt / ongewijzigd) of n.v.t. bij count = 0
 - **Pages touched:** welke pagina's aangemaakt of bijgewerkt
 - **Contradictions found:** tegenstrijdigheden (of: Geen)
 - **Stubs created:** nieuwe stubs (of: Geen)
@@ -210,9 +174,11 @@ sources in cluster "Overig" zijn beland: stel de gebruiker voor om de
 `source-cluster-tagger` agent te draaien.
 
 - Roep de Task tool aan met `subagent_type: source-cluster-tagger`
-- De agent her-evalueert "Overig"-sources en wijst betere clustertags toe,
-  voert de wijzigingen direct uit, en draagt op om
-  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` te draaien
+- De agent her-evalueert "Overig"-sources en wijst betere clustertags toe in
+  de frontmatter van de bronpagina's
+- Draai daarna zelf opnieuw
+  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`, zodat de
+  nieuwe tags in `sources-index.md` landen
 - Doe dit vóór `qmd update` als de gebruiker akkoord gaat; anders sla over
 
 ---
@@ -223,3 +189,4 @@ sources in cluster "Overig" zijn beland: stel de gebruiker voor om de
 - Stap 2 (bespreek met gebruiker) nooit overslaan
 - `stat -f` is macOS BSD-syntax — deze skill werkt alleen op macOS
 - ingest-state.md tabel: gebruik `\|` als pipe-escape in wikilinks binnen tabelcellen
+- Bewerk `wiki/sources-index.md` en `wiki/concepts-index.md` nooit met de hand; alleen `regen-quick-indexes.py` schrijft ze
