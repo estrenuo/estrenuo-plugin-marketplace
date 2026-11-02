@@ -45,9 +45,11 @@ met de bestandsnaam en onderbreek de sessiestart.
 
 ## Stap 2: Lees index.md
 
-Lees `index.md` volledig. Tel het aantal pagina-entries (regels die beginnen met `- [[`) en het aantal categoriekoppen (regels die beginnen met `##`). Noteer beide tellingen voor gebruik in stap 5.
+Lees `index.md` volledig. Neem het aantal pagina's uit de regel `**Total wiki pages**` in de sectie `## Stats`, en tel het aantal categoriekoppen (regels die beginnen met `##`, zonder `## Stats` en `## Meta`). Noteer beide voor gebruik in stap 5.
 
-**Waarom:** index.md is de gezaghebbende catalog van wiki-content. Bestandstelling via `find` telt ook stubs en artefacten — index.md geeft de werkelijke omvang. Zonder deze telling is de statusinformatie in stap 5 onnauwkeurig.
+Ontbreekt `## Stats` of de regel `**Total wiki pages**`, tel dan de regels die beginnen met `- [[` en zeg in stap 5 dat het een schatting is.
+
+**Waarom:** `## Stats` wordt geteld door `scripts/register.py index stats` en klopt dus met de schijf. Regels tellen klopt niet: veel regels in index.md zijn kommalijsten met tientallen links, en bronpagina's staan in `wiki/sources-index.md`, niet in index.md.
 
 ## Stap 3: Lees log.md
 
@@ -82,7 +84,7 @@ Wacht op de reactie van de gebruiker voordat je een vervolgactie start. Start ge
 
 <success_criteria>
 - [ ] Stap 1: CLAUDE.md volledig gelezen
-- [ ] Stap 2: index.md gelezen, pagina- en categorietellingen beschikbaar
+- [ ] Stap 2: index.md gelezen, paginatotaal uit `## Stats` en categorietelling beschikbaar
 - [ ] Stap 3: Laatste 5 log-entries gelezen en genoteerd
 - [ ] Stap 4: Geen review-queue gelezen of aangemaakt; eventuele datum-acties naar OmniFocus gerouteerd
 - [ ] Stap 5: Status gerapporteerd in exact het voorgeschreven formaat, gevolgd door "Wat wil je doen?"

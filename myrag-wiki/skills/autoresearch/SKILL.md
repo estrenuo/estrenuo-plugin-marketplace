@@ -299,30 +299,34 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"
 ```
 Het script leest frontmatter en de eerste zin van `## Summary` van elke
 pagina. Daarom is die eerste zin (≤160 tekens) belangrijk. Nooit met de
-hand regels toevoegen.
+hand regels toevoegen. Draai na 5.2 ook `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats`
+(telt `## Stats` in `index.md` opnieuw).
 
-**5.2 — Update `index.md`**
+**5.2 — Registreer in `index.md` via `register.py`**
 
-Voeg de nieuwe synthesis-pagina toe onder de relevante cluster-sectie:
+`index.md` heeft één schrijver: `scripts/register.py`. Schrijf er nooit zelf in.
+Kies eerst sectie en groep uit `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index sections`, en registreer dan
+de synthesis-pagina en elke nieuwe concept- of entity-pagina:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page wiki/analysis/research-<topic-slug>.md --section "Analysis" --summary "<één zin>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page wiki/concepts/<slug>.md --section "<## kop>" --group "<vet label>" --summary "<één zin>"
 ```
-- [[research-<topic-slug>|Research: <Topic>]] — <one-line beschrijving> (N sources)
-```
-Voeg ook nieuwe entities/concepts toe als die in `index.md` per categorie
-gegroepeerd worden (check huidige structuur van `index.md` eerst).
+Bronpagina's niet: die staan in `wiki/sources-index.md`. Het script zet titel
+en `(N sources)` uit de frontmatter en voegt niets dubbel toe.
 
-**5.3 — Append aan `log.md` (BOVENAAN)**
+**5.3 — Log via `register.py`**
 
-Format volgens myrag log-conventies (`## [YYYY-MM-DD] type | Title`):
-
-```
-## [YYYY-MM-DD] analysis | Research: <Topic>
-- Modus: autoresearch (rondes: N, queries: N, sources: N)
-- Pagina's: [[research-<topic-slug>|Research: <Topic>]], [[<source-1>|...]], [[<concept-1>|...]]
-- Kernbevinding: <één zin>
-- Open gaps: <kort, of "geen">
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type analysis --title "Research: <Topic>" \
+  --body "- Modus: autoresearch (rondes: N, queries: N, sources: N)" \
+  --body "- Pagina's: [[research-<topic-slug>|Research: <Topic>]], [[<source-1>|...]], [[<concept-1>|...]]" \
+  --body "- Kernbevinding: <één zin>" \
+  --body "- Open gaps: <kort, of \"geen\">"
 ```
 
-Type is **`analysis`** (myrag-canoniek), niet `autoresearch`.
+Het script zet de entry onderaan `log.md` (append-only), als
+`## [YYYY-MM-DD] analysis | Research: <Topic>`. Type is **`analysis`**
+(myrag-canoniek), niet `autoresearch`. Schrijf nooit zelf in `log.md`.
 
 **5.4 — `qmd update` en `qmd embed`**
 

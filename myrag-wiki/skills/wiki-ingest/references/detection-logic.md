@@ -44,33 +44,34 @@ Deze count staat in het rapport (zie SKILL.md Stap 2):
 
 **Force-ingest** (`ingest <bestandsnaam>`) heeft altijd `count = 1`.
 
-## Bash-commando's
+## Commando
+
+De regels hierboven voert `scripts/register.py` uit; je hoeft ze niet met de hand toe te passen.
 
 ```bash
-# mtime ophalen (macOS BSD-syntax — werkt niet op Linux)
-mtime=$(stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S" "raw/<bestand>")
+# Alle raws classificeren (JSON: new, modified, unchanged, deleted, broken_rows, multi_page)
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state status
 
-# hash ophalen (eerste 12 chars van SHA-256)
-hash=$(shasum -a 256 "raw/<bestand>" | cut -c1-12)
-
-# Scan raw/ — alleen .md en .pdf, exclusief raw/assets/
-find raw/ -maxdepth 1 -type f \( -name "*.md" -o -name "*.pdf" \) | sort
+# Eén bestand
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state status --raw "raw/<bestand>"
 ```
+
+Het script berekent mtime als lokale tijd `%Y-%m-%dT%H:%M:%S` (gelijk aan `stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S"`) en de hash als de eerste 12 tekens van SHA-256 (gelijk aan `shasum -a 256 | cut -c1-12`). Bij gelijke mtime slaat het de hash over. Het werkt ook buiten macOS.
 
 ## Force-ingest modus
 
 `ingest <bestandsnaam>` slaat de detectiefase volledig over en voert stappen 1-10 direct uit op het opgegeven bestand. Gebruik dit om een bestand opnieuw te verwerken ongeacht mtime/hash-status.
 
-Na voltooiing: ververs de rij in ingest-state.md (mtime, hash, datum).
+Na voltooiing: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<bestand>" [--page …]` ververst de rij (mtime, hash, datum).
 
 ## Multi-page check (bij Modified)
 
-Controleer of de Source page cel van de ingest-state.md rij meerdere wikilinks bevat (komma-gescheiden).
+Controleer of de Source page cel van de ingest-state.md rij meerdere wikilinks bevat (komma-gescheiden). `ingest-state status` zet zulke raws onder `multi_page`, met hun slugs.
 
 Zo ja:
 1. Toon alle gelinkte pagina's
 2. Vraag gebruiker: primaire bronpagina / derivative analysis-pagina / allebei
 3. Voer stappen 2-9 alleen uit voor de bevestigde pagina's
-4. Update Ingested-datum naar vandaag
+4. `ingest-state set --raw …` ververst de Ingested-datum naar vandaag
 
 Zo nee: voer gewoon stappen 1-10 uit.

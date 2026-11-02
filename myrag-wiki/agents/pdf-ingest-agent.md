@@ -45,18 +45,26 @@ Sluit af met: "Klopt dit beeld? Dan schrijf ik de pagina's."
 1. Write source summary page: `wiki/sources/YYYY-MM-DD-[slug].md` with correct frontmatter
 2. Update/create relevant entity pages in `wiki/entities/`
 3. Update/create relevant concept pages in `wiki/concepts/`
-4. Update `index.md` — add new page entries
-5. Do **not** edit `wiki/sources-index.md` or `wiki/concepts-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after the batch. Make sure every page you write has a `## Summary` whose first sentence works as a one-liner (≤160 characters).
-6. Append to `log.md`: `## [YYYY-MM-DD] ingest | [Title]` + one-line body
-7. Update `wiki/ingest-state.md`:
-   - Run: `stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S" "raw/<filename>"` for mtime
-   - Run: `shasum -a 256 "raw/<filename>" | cut -c1-12` for hash
-   - Add or update the row in the state table
+4. Make sure every page you write has a `## Summary` whose first sentence works as a one-liner (≤160 characters); the quick-indexes are built from it
+5. End with the Registerblok (see below)
+
+**Registers:** you never write `index.md`, `log.md`, `wiki/ingest-state.md`, `wiki/sources-index.md` or `wiki/concepts-index.md`. One script owns each of them, and the calling skill runs it. You end your answer with a **Registerblok**: a fenced bash block with the exact `register.py` commands, in the order given below, which the caller runs unchanged from the vault root. Use real paths and titles, no placeholders. For the `--section`/`--group` of `index add`, pick an existing `## ` heading and bold group label from `index.md` (read it; do not invent one). Source pages (`wiki/sources/`, `recipes/`, `travel/`) never get an `index add`.
+
+Registerblok for this agent, in this order (`ingest-state set` always last):
+
+```bash
+R="${CLAUDE_PLUGIN_ROOT}/scripts/register.py"
+# one line per NEW concept/entity page (none for the source page)
+python3 "$R" index add --page wiki/concepts/<slug>.md --section "<## kop>" --group "<vet label>" --summary "<één zin>"
+python3 "$R" log --type ingest --title "<Titel>" --body "<één regel: wat is aangemaakt of bijgewerkt>"
+python3 "$R" ingest-state set --raw "raw/<bestand>.pdf" --page wiki/sources/<slug>.md
+```
+
+Use `--type update` instead of `ingest` for a re-ingest of a PDF that already had a row. The script computes mtime and hash itself; you do not need a shell for this. For a derivative page that cites the same PDF, add another `--page` to the `ingest-state set` line.
 
 **Wikilink rule:** All internal links MUST use piped syntax `[[kebab-filename|Display Text]]`. Never use bare `[[Display Text]]`.
 
 ## Error handling
 
 - PDF > 20 pages: chunk automatically, aggregate findings across all chunks before presenting summary.
-- mtime or hash command fails: use `-` as placeholder, note the failure in the report.
-- Write fails: log error, do not write dependent files (skip index.md update if the source page failed), report all failures at end.
+- Write fails: log error, do not write dependent files, and leave the lines that depend on a failed page out of the Registerblok (no `ingest-state set` if the source page failed). Report all failures at end.
