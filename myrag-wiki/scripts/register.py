@@ -30,7 +30,8 @@ Guarantees:
   entry is a no-op.
 - ingest-state.md: one row per raw, mtime/hash computed here (local time
   `%Y-%m-%dT%H:%M:%S`, first 12 hex of SHA-256), wikilinks written as
-  `[[slug\\|Title]]`, rows kept in case-insensitive order, only the table under
+  `[[slug\\|Title]]`, a `|` in a raw name written as `\\|` and the name stored in
+  NFC (macOS file names are NFD), rows kept in case-insensitive order, only the table under
   `## State table` (and new rows in `## Multi-page references`) is touched.
 - index.md: one line `- [[slug|Title]] — summary (N sources)` per call, placed
   in an existing section/group; existing text and the rest of the frontmatter
@@ -56,6 +57,7 @@ import stat
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 
 LOG_TYPES = ("ingest", "update", "query", "analysis", "lint", "fix")
@@ -65,6 +67,7 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MTIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")
 HASH_RE = re.compile(r"^[0-9a-f]{12}$")
 CELL_SPLIT = re.compile(r"(?<!\\)\|")
+FILE_CELL = re.compile(r"^\|\s*`([^`]*)`\s*(?=\|)")
 LINK_SLUG = re.compile(r"\[\[([^\]|\\#]+)")
 
 
@@ -443,13 +446,30 @@ def raw_fingerprint(path: Path) -> tuple[str, str]:
     return raw_mtime(path), raw_hash(path)
 
 
+def nfc(name: str) -> str:
+    """macOS hands out file names in NFD; the table and every comparison use NFC."""
+    return unicodedata.normalize("NFC", name)
+
+
+def esc_file(name: str) -> str:
+    return name.replace("|", "\\|")
+
+
 class Row:
     def __init__(self, line: str):
         self.line = line
-        cells = [c.strip() for c in CELL_SPLIT.split(line)[1:-1]]
+        # The File cell is read as one backticked span, so a raw name with a bare `|`
+        # (written before names were escaped) still parses; problems() reports it.
+        m = FILE_CELL.match(line)
+        if m:
+            cells = [m.group(1)] + [c.strip() for c in CELL_SPLIT.split(line[m.end():])[1:-1]]
+            self.stored_file = m.group(1)
+        else:
+            cells = [c.strip() for c in CELL_SPLIT.split(line)[1:-1]]
+            self.stored_file = cells[0].strip("`") if cells else ""
         self.cells = cells
         self.ok = len(cells) == 5
-        self.file = cells[0].strip("`") if cells else ""
+        self.file = nfc(self.stored_file.replace("\\|", "|"))
         self.mtime = cells[1] if len(cells) > 1 else ""
         self.hash = cells[2] if len(cells) > 2 else ""
         self.source = cells[3] if self.ok else (" \\| ".join(cells[3:-1]) if len(cells) > 5 else "")
@@ -462,10 +482,19 @@ class Row:
         return [s.strip() for s in LINK_SLUG.findall(self.source)]
 
     def render(self) -> str:
-        return f"| `{self.file}` | {self.mtime} | {self.hash} | {self.source} | {self.ingested} |"
+        return f"| `{esc_file(self.file)}` | {self.mtime} | {self.hash} | {self.source} | {self.ingested} |"
+
+    def file_problems(self) -> list[str]:
+        """Problems in the File cell only; check --fix repairs these by re-rendering it."""
+        out = []
+        if CELL_SPLIT.search(self.stored_file):
+            out.append("'|' zonder backslash in de bestandsnaam")
+        if self.stored_file.replace("\\|", "|") != self.file:
+            out.append("bestandsnaam niet in NFC")
+        return out
 
     def problems(self) -> list[str]:
-        out = []
+        out = self.file_problems()
         if len(self.cells) != 5:
             out.append(f"{len(self.cells)} cellen i.p.v. 5 (een '|' zonder backslash in een wikilink?)")
         if not MTIME_RE.match(self.mtime):
@@ -497,7 +526,7 @@ class _StateTable:
         self.rows = [Row(l) for l in self.lines[self.first:self.end]]
 
     def find(self, name: str) -> Row | None:
-        return next((r for r in self.rows if r.file == name), None)
+        return next((r for r in self.rows if r.file == nfc(name)), None)
 
     def render(self) -> str:
         return "\n".join(self.lines[:self.first] + [r.line for r in self.rows] + self.lines[self.end:])
@@ -513,8 +542,13 @@ def _raw_name(vault: Path, arg: str) -> tuple[str, Path]:
     if path.suffix.lower() not in RAW_EXT:
         raise Fail(1, f"alleen {' en '.join(RAW_EXT)} worden getrackt: {arg}")
     if not path.is_file():
-        raise Fail(2, f"raw-bestand niet gevonden: raw/{rel}")
-    return rel, path
+        # Same name in another Unicode form (NFC from a shell, NFD on disk on Linux).
+        hit = next((p for p in path.parent.iterdir() if nfc(p.name) == nfc(path.name)), None) \
+            if path.parent.is_dir() else None
+        if hit is None or not hit.is_file():
+            raise Fail(2, f"raw-bestand niet gevonden: raw/{rel}")
+        path = hit
+    return nfc(rel), path
 
 
 def _link(page: Page) -> str:
@@ -533,7 +567,7 @@ def _add_multi_page(lines: list[str], row: Row, pages_by_slug: dict[str, Page]) 
     i = head + 2
     while i < len(lines) and lines[i].startswith("|"):
         cells = [c.strip() for c in CELL_SPLIT.split(lines[i])[1:-1]]
-        if cells and cells[0].strip("`") == row.file:
+        if cells and nfc(cells[0].strip("`").replace("\\|", "|")) == row.file:
             have = set(LINK_SLUG.findall(" ".join(cells[1:3])))
             extra = [s for s in row.slugs() if s not in have]
             if not extra or len(cells) < 4:
@@ -546,7 +580,7 @@ def _add_multi_page(lines: list[str], row: Row, pages_by_slug: dict[str, Page]) 
     slugs = row.slugs()
     primary = _cell_link(slugs[0], pages_by_slug)
     derivs = ", ".join(_deriv(s, pages_by_slug) for s in slugs[1:])
-    lines.insert(i, f"| `{row.file}` | {primary} | {derivs} |  |")
+    lines.insert(i, f"| `{esc_file(row.file)}` | {primary} | {derivs} |  |")
     return "added"
 
 
@@ -600,7 +634,7 @@ def _set(vault: Path, table: _StateTable, args) -> dict:
         if not pages:
             raise Fail(1, f"raw/{name} heeft nog geen rij; geef minstens één --page")
         pages.sort(key=lambda p: 0 if p.dir == "sources" else 1)
-        row = Row(f"| `{name}` | {mtime} | {digest} | {', '.join(_link(p) for p in pages)} | {date} |")
+        row = Row(f"| `{esc_file(name)}` | {mtime} | {digest} | {', '.join(_link(p) for p in pages)} | {date} |")
         keys = [r.key() for r in table.rows]
         table.rows.insert(bisect.bisect_right(keys, row.key()), row)
         status = "added"
@@ -647,11 +681,15 @@ def _check(table: _StateTable, args) -> dict:
     fixed = 0
     for r in table.rows:
         if len(r.cells) > 5 and MTIME_RE.match(r.mtime) and HASH_RE.match(r.hash) and DATE_RE.match(r.ingested):
-            r.source = "\\|".join(c.strip() for c in CELL_SPLIT.split(r.line)[1:-1][3:-1])
+            r.source = "\\|".join(r.cells[3:-1])
             r.cells = [r.file, r.mtime, r.hash, r.source, r.ingested]
             r.ok = True
             r.line = r.render()
             fixed += 1
+        elif r.ok and r.file_problems():
+            r.line = r.render()
+            fixed += 1
+    table.rows = [Row(r.line) for r in table.rows]
     if unsorted:
         table.rows.sort(key=Row.key)
     new = table.render()
@@ -670,14 +708,15 @@ def _status(vault: Path, args) -> dict:
     raw = vault / "raw"
     if args.raw:
         name, path = _raw_name(vault, args.raw)
-        files = [name]
+        disk = {name: path}
     else:
-        files = sorted(p.name for p in raw.iterdir()
-                       if p.is_file() and p.suffix.lower() in RAW_EXT and not p.name.startswith("."))
+        disk = {nfc(p.name): p for p in raw.iterdir()
+                if p.is_file() and p.suffix.lower() in RAW_EXT and not p.name.startswith(".")}
+    files = sorted(disk)
     out = {"new": [], "modified": [], "unchanged": [], "deleted": [], "broken_rows": [], "multi_page": {}}
     for name in files:
         row = by_name.get(name)
-        path = raw / name
+        path = disk[name]
         if row is None:
             out["new"].append(name)
             continue

@@ -320,6 +320,57 @@ def main() -> int:
         check("index stats: last_change onaangeroerd",
               "last_change: lange tekst die nooit mag veranderen | met pipe en [[link|Link]]" in txt)
 
+        # ---------------- ingest-state: raw-namen met '|' en in NFD ----------------
+        # Eigen vault, zodat de New/Deleted-verwachtingen hierboven niet verschuiven.
+        with tempfile.TemporaryDirectory() as tmp2:
+            root = Path(tmp2)
+            make_vault(root)
+            state = root / "wiki" / "ingest-state.md"
+            nfd = "Café | menu.md"                       # zo levert macOS hem aan
+            nfc = "Café | menu.md"
+            for name in ("Oud | pijp.md", "Nieuw | pijp.md", nfd):
+                (root / "raw" / name).write_text(name, encoding="utf-8")
+            # Rij zoals versie 0.12.0 hem schreef: kale '|' in de File-cel.
+            txt = state.read_text(encoding="utf-8").replace(
+                "| `weg.md` |",
+                "| `Oud | pijp.md` | 2026-01-01T00:00:00 | 0123456789ab | [[s-a\\|Bron A]] | 2026-01-01 |\n| `weg.md` |")
+            state.write_text(txt, encoding="utf-8")
+
+            code, out = run(root, "ingest-state", "status", "--list-unchanged")
+            check("pipe: oude rij met kale '|' is geen New of Deleted",
+                  "Oud | pijp.md" not in out.get("new", []) and out.get("deleted") == ["weg.md"])
+            code, out = run(root, "ingest-state", "check")
+            check("pipe: check meldt kale '|' in bestandsnaam", code == 1 and any(
+                "bestandsnaam" in p["problem"] for p in out.get("problems", [])))
+            code, out = run(root, "ingest-state", "check", "--fix")
+            txt = state.read_text(encoding="utf-8")
+            check("pipe: check --fix escapet de File-cel (en herstelt kapot.md)",
+                  code == 0 and "| `Oud \\| pijp.md` | 2026-01-01T00:00:00 |" in txt
+                  and "| [[s-k\\|Kapot]] |" in txt)
+
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/Nieuw | pijp.md",
+                            "--page", "wiki/sources/s-n.md")
+            check("pipe: set schrijft '\\|' in de File-cel",
+                  code == 0 and "| `Nieuw \\| pijp.md` |" in state.read_text(encoding="utf-8"))
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/Nieuw | pijp.md",
+                            "--page", "wiki/sources/s-n.md")
+            check("pipe: tweede set vindt de rij terug", out.get("status") == "updated"
+                  and state.read_text(encoding="utf-8").count("Nieuw \\| pijp.md") == 1)
+
+            code, out = run(root, "ingest-state", "set", "--raw", f"raw/{nfc}", "--page", "wiki/sources/s-a.md")
+            txt = state.read_text(encoding="utf-8")
+            check("nfd: set met NFC-naam vindt het NFD-bestand en schrijft NFC",
+                  code == 0 and "| `Café \\| menu.md` |" in txt and "Café" not in txt)
+            code, out = run(root, "ingest-state", "set", "--raw", f"raw/{nfd}", "--page", "wiki/sources/s-a.md")
+            check("nfd: set met NFD-naam werkt dezelfde rij bij", out.get("status") == "updated")
+            code, out = run(root, "ingest-state", "status", "--list-unchanged")
+            check("pipe + nfd: niets onterecht New, alleen weg.md Deleted",
+                  sorted(out.get("new", [])) == ["Nieuw.md", "beta.pdf"] and out.get("deleted") == ["weg.md"]
+                  and {nfc, "Nieuw | pijp.md"} <= set(out.get("unchanged", []))
+                  and "Oud | pijp.md" in out.get("modified", []))   # rij heeft een verzonnen mtime/hash
+            code, out = run(root, "ingest-state", "check")
+            check("pipe + nfd: check schoon", code == 0 and out.get("status") == "ok")
+
     failed = [n for n, ok in results if not ok]
     for name, ok in results:
         print(f"{'PASS' if ok else 'FAIL'}  {name}")
