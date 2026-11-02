@@ -116,9 +116,12 @@ def make_vault(root: Path) -> None:
     (root / "log.md").write_text(LOG, encoding="utf-8")
 
 
+ENV: dict[str, str] = {}   # set in main(): isolated XDG_CACHE_HOME for the lock dir
+
+
 def run(root: Path, *args: str) -> tuple[int, dict]:
     r = subprocess.run([sys.executable, "-I", str(SCRIPT), "--vault", str(root), *args],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env=ENV)
     try:
         return r.returncode, json.loads(r.stdout)
     except json.JSONDecodeError:
@@ -131,7 +134,8 @@ def main() -> int:
     def check(name: str, ok: bool) -> None:
         results.append((name, bool(ok)))
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as cache:
+        ENV.update(os.environ, XDG_CACHE_HOME=cache)
         root = Path(tmp)
         make_vault(root)
         log = root / "log.md"
@@ -166,11 +170,30 @@ def main() -> int:
         n_before = log.read_text(encoding="utf-8").count("\n## [")
         procs = [subprocess.Popen([sys.executable, "-I", str(SCRIPT), "--vault", str(root), "log",
                                    "--type", "ingest", "--title", f"Parallel {i}", "--date", "2026-11-02"],
-                                  stdout=subprocess.DEVNULL) for i in range(8)]
+                                  stdout=subprocess.DEVNULL, env=ENV) for i in range(8)]
         codes = [p.wait() for p in procs]
         txt = log.read_text(encoding="utf-8")
         check("log: 8 parallelle aanroepen, 8 entries, oude inhoud intact",
               all(c == 0 for c in codes) and txt.count("\n## [") == n_before + 8 and txt.startswith(after))
+
+        # Lock: per-user dir with mode 0700; a symlink at the lock path is refused, not followed.
+        import stat as _stat
+        lock_dir = Path(cache) / "myrag"
+        check("lock: map ~/.cache/myrag met mode 0700",
+              lock_dir.is_dir() and _stat.S_IMODE(lock_dir.stat().st_mode) == 0o700)
+        locks = list(lock_dir.glob("register-*.lock"))
+        check("lock: bestand met mode 0600", len(locks) == 1
+              and _stat.S_IMODE(locks[0].stat().st_mode) == 0o600)
+        victim = Path(cache) / "victim.txt"
+        victim.write_text("niet afkappen", encoding="utf-8")
+        locks[0].unlink()
+        locks[0].symlink_to(victim)
+        log_before = log.read_text(encoding="utf-8")
+        code, out = run(root, "log", "--type", "fix", "--title", "Via symlink")
+        check("lock: symlink op lockpad -> exit 3, doel en log ongemoeid",
+              code == 3 and victim.read_text(encoding="utf-8") == "niet afkappen"
+              and log.read_text(encoding="utf-8") == log_before)
+        locks[0].unlink()
 
         # ---------------- ingest-state check ----------------
         code, out = run(root, "ingest-state", "check")

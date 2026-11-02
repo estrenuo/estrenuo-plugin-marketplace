@@ -36,7 +36,7 @@ Guarantees:
   in an existing section/group; existing text and the rest of the frontmatter
   stay byte-for-byte the same. Source-style pages (sources/, recipes/,
   travel/) are listed in wiki/sources-index.md, not in index.md.
-- Every write holds a per-vault lock and replaces the file atomically (log.md
+- Every write holds a per-vault lock (in ~/.cache/myrag, mode 0700) and replaces the file atomically (log.md
   is appended under the lock instead, so earlier bytes are never rewritten).
 """
 
@@ -52,6 +52,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 import time
@@ -105,16 +106,41 @@ def resolve_vault(arg: str | None) -> Path:
     return root
 
 
+def _lock_dir() -> Path:
+    """Per-user lock directory (~/.cache/myrag, mode 0700), never a shared /tmp.
+
+    Refuses a symlink or a directory owned by someone else, so another user
+    cannot point the lock file at a file of ours.
+    """
+    base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    d = base / "myrag"
+    try:
+        d.mkdir(mode=0o700, parents=True, exist_ok=True)
+        st = os.lstat(d)
+    except OSError as e:
+        raise Fail(3, f"lockmap {d} niet bruikbaar: {e}")
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid():
+        raise Fail(3, f"lockmap {d} is geen eigen map van deze gebruiker (symlink of andere eigenaar)")
+    if stat.S_IMODE(st.st_mode) & 0o077:
+        os.chmod(d, 0o700)
+    return d
+
+
 @contextlib.contextmanager
 def vault_lock(vault: Path, timeout: float = 30.0):
     """One lock per vault, kept outside the vault so iCloud never syncs it."""
     key = hashlib.sha1(str(vault).encode("utf-8")).hexdigest()[:16]
-    path = Path(tempfile.gettempdir()) / f"myrag-register-{key}.lock"
-    with open(path, "w") as fh:
+    path = _lock_dir() / f"register-{key}.lock"
+    try:
+        # No O_TRUNC, and O_NOFOLLOW: a symlink at this path is refused, not followed.
+        fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    except OSError as e:
+        raise Fail(3, f"lockbestand {path} niet te openen: {e}")
+    try:
         deadline = time.monotonic() + timeout
         while True:
             try:
-                fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 break
             except BlockingIOError:
                 if time.monotonic() > deadline:
@@ -123,7 +149,9 @@ def vault_lock(vault: Path, timeout: float = 30.0):
         try:
             yield
         finally:
-            fcntl.flock(fh, fcntl.LOCK_UN)
+            fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)
 
 
 def atomic_write(path: Path, text: str) -> None:
