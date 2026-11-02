@@ -8,8 +8,7 @@ Na verwerking van alle bestanden rapporteer je altijd de zeven verplichte elemen
 ## Ingest-rapport — [YYYY-MM-DD]
 
 **Tellingen:** N nieuw | N bijgewerkt | N ongewijzigd | N verwijderd (orphan) | N mislukt
-**Index-modus:** patch (count=N < 3) | regenerate (count=N ≥ 3) | n.v.t. (count=0)
-— [korte rationale: bijv. "patch want 2 bronnen verwerkt" of "regenerate want 5 bronnen, script aangeroepen"]
+**Quick-indexes:** geregenereerd — [sources-index bijgewerkt|ongewijzigd, concepts-index bijgewerkt|ongewijzigd] | n.v.t. (count=0)
 
 **Pages touched:**
 - Nieuw: [[slug|Titel]], ...
@@ -48,7 +47,7 @@ Na verwerking van alle bestanden rapporteer je altijd de zeven verplichte elemen
 |---------|--------------------|-----------------|
 | Tellingen | Alle vijf: nieuw / bijgewerkt / ongewijzigd / verwijderd / mislukt | Nee — altijd alle vijf |
 | Per-bestand uitkomsten | Eén tabelrij per verwerkt of gedetecteerd bestand | Nee — altijd alle bestanden |
-| Index-modus | patch / regenerate / n.v.t. + count + korte rationale | Nee — altijd vermelden |
+| Quick-indexes | geregenereerd (per bestand bijgewerkt/ongewijzigd) of n.v.t. | Nee — altijd vermelden |
 | Pages touched | Elke gewijzigde of nieuwe wikipagina | Ja ("Geen") |
 | Contradictions found | Tegenstrijdigheden in ## Open questions | Ja ("Geen") |
 | Stubs created | Nieuwe stubpagina's aangemaakt | Ja ("Geen") |
@@ -60,8 +59,8 @@ Na verwerking van alle bestanden rapporteer je altijd de zeven verplichte elemen
 - "Deleted" in de telling betekent: orphan gedetecteerd én de gebruiker gevraagd om bevestiging — de pagina is nog NIET verwijderd
 - "verwijderd (orphan)" in de Per-bestand tabel betekent: gedetecteerd én bevestiging gevraagd — de raw zelf is niet aangeraakt
 - Suggesties voor vervolgvragen zijn niet verplicht maar sterk aanbevolen; ze maken de waarde van de ingest zichtbaar
-- Index-modus moet altijd vermeld worden, óók bij count=0 (dan: "n.v.t. — geen verwerking nodig")
-- De rationale achter Index-modus is kort maar concreet: noem het count-getal en de gekozen actie
+- Quick-indexes moet altijd vermeld worden, óók bij count=0 (dan: "n.v.t. — geen verwerking nodig")
+- Neem de uitkomst van het script over: per index-bestand "bijgewerkt" of "ongewijzigd"
 
 ## Voorbeeld
 
@@ -69,7 +68,7 @@ Na verwerking van alle bestanden rapporteer je altijd de zeven verplichte elemen
 ## Ingest-rapport — 2026-05-06
 
 **Tellingen:** 2 nieuw | 1 bijgewerkt | 4 ongewijzigd | 0 verwijderd | 0 mislukt
-**Index-modus:** regenerate (count=3 ≥ 3) — script aangeroepen, sources-index en concepts-index volledig herzien
+**Quick-indexes:** geregenereerd — sources-index bijgewerkt, concepts-index bijgewerkt
 
 **Pages touched:**
 - Nieuw: [[2026-05-06-data-vault-boek|Data Vault Boek]], [[data-vault-2|Data Vault 2.0]]
@@ -98,13 +97,13 @@ Het boek introduceert een vijfde normaalvorm specifiek voor Data Vault — niet 
 - Hoe verhoudt Data Vault zich tot Anchor Modeling?
 ```
 
-## Voorbeeld 2 — patch-modus
+## Voorbeeld 2 — één nieuwe bron
 
 ```
 ## Ingest-rapport — 2026-05-07
 
 **Tellingen:** 1 nieuw | 0 bijgewerkt | 5 ongewijzigd | 0 verwijderd | 0 mislukt
-**Index-modus:** patch (count=1 < 3) — één regel toegevoegd aan sources-index.md cluster "Recepten & Koken"
+**Quick-indexes:** geregenereerd — sources-index bijgewerkt (cluster "Recepten & Koken" +1), concepts-index ongewijzigd
 
 **Pages touched:**
 - Nieuw: [[2026-05-07-paneer-curry|Paneer Curry]]
@@ -133,7 +132,7 @@ Eerste recept met paneer-bereiding via marineren — afwijkend van standaardpatr
 ## Ingest-rapport — 2026-05-08
 
 **Tellingen:** 1 nieuw | 0 bijgewerkt | 3 ongewijzigd | 0 verwijderd | 1 mislukt
-**Index-modus:** patch (count=1 < 3) — alleen het geslaagde bestand telt voor count
+**Quick-indexes:** geregenereerd — sources-index bijgewerkt, concepts-index ongewijzigd
 
 **Pages touched:**
 - Nieuw: [[2026-05-08-nieuw-artikel|Nieuw Artikel]]

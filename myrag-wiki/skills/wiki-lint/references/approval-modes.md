@@ -81,12 +81,13 @@ Voer voor elke stub op de te-vullen-lijst de volgende stappen uit in exacte volg
      maar gooi bestaande niet-stub tags niet weg).
    - Update `updated:` naar vandaag (YYYY-MM-DD).
    - Vul `sources:` aan met de slugs van de gebruikte bronpagina's.
-5. **Patch quick-index**: voeg/update de one-liner voor deze pagina in `wiki/sources-index.md`
-   of `wiki/concepts-index.md` (afhankelijk van het type: source vs. concept).
-   Format: `- [[slug|Titel]] (datum, auteur) — eerste zin van ## Summary (≤160 tekens)`.
-6. Voeg de stub toe aan de gevuld-lijst voor de log-entry.
-7. **Herbouw qmd-index**: draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` ná de laatste stub in de loop
+5. Voeg de stub toe aan de gevuld-lijst voor de log-entry. Bewerk de quick-indexes niet:
+   die volgen in stap 6 uit de frontmatter en `## Summary` die je net schreef.
+6. **Regenereer de quick-indexes**: draai via Bash
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` ná de laatste stub in de loop
    (niet na elke individuele stub), maar alleen als ≥1 stub daadwerkelijk gevuld is.
+7. **Herbouw qmd-index**: draai daarna via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed`,
+   onder dezelfde voorwaarde.
 
 Na alle stubs: schrijf één samenvattende entry aan `log.md`:
 ```
@@ -107,4 +108,4 @@ Vermeld per overgeslagen stub de reden (gebruiker koos 'nee' / telcheck mislukt 
 | Bronpagina onleesbaar               | Log als 'failed'; ga door naar volgende stub                                       |
 | Meer dan 10 stubs (Phase 7 limiet)  | Alleen de gepresenteerde top-10 worden aangeboden voor vulling                     |
 | Wikilink zonder piped syntax        | VERBODEN in gegenereerde content — altijd `[[slug|Display Text]]`                  |
-| ≥1 stub gevuld maar Stap 4 = niets  | qmd update is al uitgevoerd in vulprocedure stap 7; Stap 5 hoeft niet opnieuw     |
+| ≥1 stub gevuld maar Stap 4 = niets  | regen en qmd update zijn al uitgevoerd in vulprocedure stap 6-7; Stap 5 hoeft niet opnieuw |

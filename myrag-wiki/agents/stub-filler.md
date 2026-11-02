@@ -41,7 +41,7 @@ After approval, fill each approved stub following CLAUDE.md page conventions:
 
 After filling each stub: check if the page has an entry in `index.md`. If not, add a one-liner entry under the appropriate category.
 
-Also update the relevant quick-index: add a one-liner to `wiki/concepts-index.md` (for concept pages) or `wiki/sources-index.md` (for source pages) following the existing format.
+Do **not** edit `wiki/concepts-index.md` or `wiki/sources-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after you finish. The first sentence of the `## Summary` you write becomes the one-liner there, so keep it ≤160 characters.
 
 ## Error handling
 

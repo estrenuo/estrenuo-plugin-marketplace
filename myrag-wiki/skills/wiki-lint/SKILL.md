@@ -19,7 +19,7 @@ allowed-tools: Read Grep Bash Edit Write Task mcp__plugin_myrag-wiki_qmd-feat__q
 4. Vraag welke items de gebruiker nu wil fixen.
 5. Voer geselecteerde fixes uit en werk qmd-index bij als er wijzigingen zijn.
 
-## Stap 1: Scan wiki/ — 7 check-categorieën
+## Stap 1: Scan wiki/ — 8 check-categorieën
 
 Zodat alle structuur- en linkproblemen in de wiki systematisch in kaart worden gebracht
 vóór er fixes worden gedaan.
@@ -61,6 +61,20 @@ Doel: pagina's die niet bereikbaar zijn vanuit andere wiki-pagina's identificere
 Checks 1+2 handelt de tool zelf af. Voor de orphan-check (Check 3) geldt nog:
 zie `references/false-positives.md` voor de volledige lijst van
 false-positive-uitzonderingen die vóór rapportage toegepast moeten worden.
+
+**Check 8: Quick-index drift — via tool**
+
+Doel: zien of `wiki/sources-index.md` en `wiki/concepts-index.md` nog
+overeenkomen met de pagina's. Alleen `regen-quick-indexes.py` schrijft die
+bestanden; drift betekent dat iemand ze met de hand heeft bewerkt, of dat
+na een wijziging de regen niet is gedraaid.
+
+- Draai vanuit de vault-root:
+  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py" --check`
+- Exit 0: actueel. Exit 1: drift; de uitvoer toont de verschillende regels.
+  Schrijft niets.
+- Neem drift op onder Middel. De fix is altijd de regen zelf, nooit een
+  handmatige correctie in de index.
 
 ---
 
@@ -142,7 +156,8 @@ de bulk-loop (Modus B, LINT-03), de vulprocedure, en de randgevallen.
 gebruiker "vul alle stubs" zegt, roep de Task tool aan met `subagent_type: stub-filler`
 in plaats van de modus-loop hier ter plaatse uit te voeren. De agent toont alle vulbare
 stubs in één overzicht en wacht op goedkeuring vóór schrijven — dat is efficiënter dan
-per-stub interactie binnen de skill.
+per-stub interactie binnen de skill. De agent raakt de quick-indexes niet: draai na de
+agent zelf `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`.
 
 Na afloop van Stap 2b: ga naar Stap 3.
 
@@ -157,7 +172,7 @@ Presenteer bevindingen als geprioriteerde lijst:
 
 - **Kritiek** (broken links, bare-alias die Obsidian kapotmaakt): direct actie nodig
 - **Hoog** (orphans, contradictions): structuurproblemen die de wiki-integriteit raken
-- **Middel** (missing cross-refs, stale claims): kwaliteitsproblemen
+- **Middel** (missing cross-refs, stale claims, quick-index drift): kwaliteitsproblemen
 - **Laag** (data gaps): groei-suggesties
 
 Per bevinding: pagina, probleem, aanbevolen actie.
@@ -173,6 +188,7 @@ Sluit af met tellerstabel:
 | Missing cross-refs | X |
 | Stale claims | X |
 | Data gaps | X |
+| Quick-index drift | ja / nee |
 
 ---
 
@@ -188,6 +204,7 @@ Wacht op antwoord. Voer alleen de geselecteerde fixes uit.
 Documenteer elke fix: welke pagina is aangepast, wat is gewijzigd.
 
 Na het uitvoeren van fixes:
+- Draai `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` (schrijft alleen als er iets veranderde; bewerk de quick-indexes nooit met de hand)
 - Voeg een entry toe aan `log.md` van type `lint` met een samenvatting van de fixes
 - Werk `index.md` bij als nieuwe pagina's zijn aangemaakt of hernoemd
 

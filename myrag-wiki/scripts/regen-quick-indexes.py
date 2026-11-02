@@ -4,16 +4,25 @@
 Run from the wiki vault root (where wiki/ lives):
     python3 "$CLAUDE_PLUGIN_ROOT/scripts/regen-quick-indexes.py"
 
-Or pass an explicit vault path as argv[1]:
+Or pass an explicit vault path as the first argument:
     python3 regen-quick-indexes.py /path/to/vault
+
+Check for drift without writing (exit 1 when a regen would change a file):
+    python3 regen-quick-indexes.py --check
 
 Reads:
 - wiki/concepts/*.md
 - wiki/sources/*.md, wiki/recipes/*.md, wiki/travel/*.md
+- wiki/analysis/*.md
 
-Writes (overwrites):
-- wiki/sources-index.md   — sources grouped by thematic cluster (tag-priority match)
+Writes (overwrites, but only when the content changed):
+- wiki/sources-index.md   — sources grouped by thematic cluster (tag-priority match),
+                            plus an "Analyses" section for wiki/analysis/
 - wiki/concepts-index.md  — concepts alphabetical + alias-to-canonical map
+
+This script is the only writer of both files. Never patch them by hand: the next
+run overwrites hand edits. `created:` is kept from the existing file; `updated:`
+changes only when the body changed, so an unchanged wiki gives no file write.
 
 Cluster mapping is defined in CLUSTERS below. First match wins. To add a new cluster
 or expand an existing one, edit the keyword set. Re-run after changes.
@@ -24,17 +33,16 @@ truncated to ~160 chars.
 
 from __future__ import annotations
 
+import argparse
+import difflib
 import re
 import sys
 from pathlib import Path
 
 
-def _resolve_repo_root() -> Path:
-    """Resolve vault root from argv[1], else cwd. wiki/ must exist beneath it."""
-    if len(sys.argv) > 1:
-        candidate = Path(sys.argv[1]).resolve()
-    else:
-        candidate = Path.cwd().resolve()
+def _resolve_repo_root(arg: str | None) -> Path:
+    """Resolve vault root from the argument, else cwd. wiki/ must exist beneath it."""
+    candidate = Path(arg).resolve() if arg else Path.cwd().resolve()
     if not (candidate / "wiki").is_dir():
         sys.stderr.write(
             f"error: no wiki/ directory found under {candidate}.\n"
@@ -44,8 +52,9 @@ def _resolve_repo_root() -> Path:
     return candidate
 
 
-REPO_ROOT = _resolve_repo_root()
-WIKI = REPO_ROOT / "wiki"
+# Set in main(); module-level so the regen functions keep their simple shape.
+REPO_ROOT: Path = Path.cwd()
+WIKI: Path = REPO_ROOT / "wiki"
 
 # Cluster mapping for sources. Priority order — first match wins.
 # Keys = display name in the index. Values = set of tag keywords (lowercase).
@@ -170,6 +179,11 @@ def first_summary_sentence(text: str, max_chars: int = SUMMARY_MAX_CHARS) -> str
     return out
 
 
+def _clean_date(v: str) -> str:
+    v = v.strip().strip('"').strip("'")
+    return "" if v.lower() in ("", "onbekend", "unknown", "null", "none") else v
+
+
 def page_info(path: Path) -> dict:
     text = path.read_text(encoding="utf-8")
     fm = parse_frontmatter(text)
@@ -178,7 +192,9 @@ def page_info(path: Path) -> dict:
         "title": get_field(fm, "title").strip('"').strip("'"),
         "tags": parse_list(get_field(fm, "tags")),
         "author": get_field(fm, "author"),
-        "date": get_field(fm, "date"),
+        # `date` first; autoresearch writes `date_published` instead.
+        "date": _clean_date(get_field(fm, "date") or get_field(fm, "date_published")),
+        "created": _clean_date(get_field(fm, "created")),
         "summary": first_summary_sentence(text),
     }
 
@@ -213,7 +229,11 @@ def cluster_for(tags: list[str]) -> str:
     return "Overig"
 
 
-def regen_sources_index() -> tuple[int, dict[str, int]]:
+CREATED = "@@CREATED@@"
+UPDATED = "@@UPDATED@@"
+
+
+def build_sources_index() -> tuple[str, int, dict[str, int], int]:
     sources = []
     for subdir in ("sources", "recipes", "travel"):
         d = WIKI / subdir
@@ -233,22 +253,27 @@ def regen_sources_index() -> tuple[int, dict[str, int]]:
 
     cluster_order = [name for name, _ in CLUSTERS] + ["Overig"]
 
-    today = _today()
+    analyses = []
+    d = WIKI / "analysis"
+    if d.exists():
+        analyses = [page_info(p) for p in sorted(d.glob("*.md"))]
+    analyses.sort(key=lambda x: (x["date"] or x["created"] or "0000", x["title"]), reverse=True)
+
     lines = [
         "---",
         "title: Sources Index — Quick Reference",
         "type: meta",
-        f"created: {today}",
-        f"updated: {today}",
+        f"created: {CREATED}",
+        f"updated: {UPDATED}",
         "---",
         "",
         "# Sources Index — Quick Reference",
         "",
-        "One-liner per bron, gegroepeerd per thematisch cluster (auto-afgeleid uit `tags:` in de frontmatter), binnen cluster gesorteerd op datum (nieuwst eerst).",
+        "One-liner per bron, gegroepeerd per thematisch cluster (auto-afgeleid uit `tags:` in de frontmatter), binnen cluster gesorteerd op datum (nieuwst eerst). Analysepagina's uit `wiki/analysis/` staan onderaan in een eigen sectie.",
         "",
         "**Doel:** zonder elke source-pagina te openen kunnen scannen wat erin staat. Bij query-workflow eerst hier zoeken, dan de geselecteerde 3–5 pagina's volledig lezen.",
         "",
-        "**Onderhoud:** auto-genereerbaar via `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` (myrag-wiki plugin). Bij ingest van een nieuwe bron: regel handmatig invoegen in het juiste cluster, of het script herrunnen.",
+        "**Onderhoud:** gegenereerd door `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` (myrag-wiki plugin). Niet met de hand bewerken: de volgende run overschrijft handwerk. Wijzig de frontmatter of `## Summary` van de pagina en draai het script.",
         "",
         "**Cluster-mapping:** gebaseerd op tag-prioriteit (eerste match wint). Een bron kan in werkelijkheid meerdere clusters raken; de single-cluster-toewijzing is een navigatie-hulp, geen waarheidsclaim.",
         "",
@@ -272,24 +297,32 @@ def regen_sources_index() -> tuple[int, dict[str, int]]:
             lines.append(f"- [[{s['slug']}|{s['title']}]]{meta} — {summary}")
         lines.append("")
 
-    (WIKI / "sources-index.md").write_text("\n".join(lines), encoding="utf-8")
+    if analyses:
+        lines.append(f"## Analyses ({len(analyses)})")
+        lines.append("")
+        for a in analyses:
+            when = a["date"] or a["created"]
+            meta = f" ({when})" if when else ""
+            summary = a["summary"] or "*(geen samenvatting)*"
+            lines.append(f"- [[{a['slug']}|{a['title']}]]{meta} — {summary}")
+        lines.append("")
+
     counts = {c: len(by_cluster[c]) for c in cluster_order if c in by_cluster}
-    return len(sources), counts
+    return "\n".join(lines), len(sources), counts, len(analyses)
 
 
-def regen_concepts_index() -> tuple[int, int]:
+def build_concepts_index() -> tuple[str, int, int]:
     concepts = []
     for p in sorted((WIKI / "concepts").glob("*.md")):
         concepts.append(page_info(p))
     concepts.sort(key=lambda x: x["title"].lower())
 
-    today = _today()
     lines = [
         "---",
         "title: Concepts Index — Quick Reference",
         "type: meta",
-        f"created: {today}",
-        f"updated: {today}",
+        f"created: {CREATED}",
+        f"updated: {UPDATED}",
         "---",
         "",
         "# Concepts Index — Quick Reference",
@@ -298,7 +331,7 @@ def regen_concepts_index() -> tuple[int, int]:
         "",
         "**Doel:** snel zien welke concepten bestaan voor cross-referentie en wikilink-resolutie.",
         "",
-        "**Onderhoud:** auto-genereerbaar via `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` (myrag-wiki plugin).",
+        "**Onderhoud:** gegenereerd door `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` (myrag-wiki plugin). Niet met de hand bewerken: de volgende run overschrijft handwerk.",
         "",
         "---",
         "",
@@ -337,8 +370,48 @@ def regen_concepts_index() -> tuple[int, int]:
     for alias, slug in alias_pairs:
         lines.append(f"- **{alias}** → `[[{slug}|{alias}]]`")
 
-    (WIKI / "concepts-index.md").write_text("\n".join(lines), encoding="utf-8")
-    return len(concepts), len(alias_pairs)
+    return "\n".join(lines), len(concepts), len(alias_pairs)
+
+
+_DATE_LINE = re.compile(r"^(created|updated):.*$", re.MULTILINE)
+
+
+def _strip_dates(text: str) -> str:
+    """Body for comparison: the created/updated lines do not count as content."""
+    return _DATE_LINE.sub(r"\1:", text, count=2)
+
+
+def write_index(path: Path, template: str, check: bool) -> bool:
+    """Write `template` to `path` when the content changed. Returns True on change.
+
+    `created:` is kept from the existing file. `updated:` becomes today only when
+    the content changed; otherwise the file is not touched at all.
+    """
+    old = path.read_text(encoding="utf-8") if path.exists() else ""
+    old_fm = parse_frontmatter(old)
+    created = get_field(old_fm, "created") or _today()
+    probe = template.replace(CREATED, created).replace(UPDATED, "")
+    if old and _strip_dates(probe) == _strip_dates(old):
+        return False
+    new = template.replace(CREATED, created).replace(UPDATED, _today())
+    if check:
+        diff = list(difflib.unified_diff(
+            old.splitlines(), new.splitlines(),
+            fromfile=f"{path.name} (huidig)", tofile=f"{path.name} (na regen)",
+            lineterm="", n=0,
+        ))
+        body = [l for l in diff if l[:1] in "+-" and not l.startswith(("+++", "---"))
+                and not re.match(r"^[+-](created|updated):", l)]
+        print(f"DRIFT {path.name}: {len(body)} regels verschillen")
+        for l in body[:20]:
+            print(f"  {l[:200]}")
+        if len(body) > 20:
+            print(f"  … en nog {len(body) - 20}")
+        return True
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(new, encoding="utf-8")
+    tmp.replace(path)
+    return True
 
 
 def _today() -> str:
@@ -346,18 +419,37 @@ def _today() -> str:
     return date.today().isoformat()
 
 
-def main() -> int:
-    if not WIKI.exists():
-        print(f"ERROR: {WIKI} not found. Run from repo root.", file=sys.stderr)
-        return 1
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Regenerate wiki/sources-index.md and wiki/concepts-index.md.")
+    parser.add_argument("vault", nargs="?", help="vault root (default: current directory)")
+    parser.add_argument("--check", action="store_true",
+                        help="write nothing; exit 1 when a regen would change a file")
+    args = parser.parse_args(argv)
 
-    src_count, cluster_counts = regen_sources_index()
-    print(f"sources-index.md: {src_count} entries across {len(cluster_counts)} clusters")
+    global REPO_ROOT, WIKI
+    REPO_ROOT = _resolve_repo_root(args.vault)
+    WIKI = REPO_ROOT / "wiki"
+
+    src_text, src_count, cluster_counts, analysis_count = build_sources_index()
+    cpt_text, cpt_count, alias_count = build_concepts_index()
+
+    src_changed = write_index(WIKI / "sources-index.md", src_text, args.check)
+    cpt_changed = write_index(WIKI / "concepts-index.md", cpt_text, args.check)
+
+    if args.check:
+        if not (src_changed or cpt_changed):
+            print("OK: sources-index.md en concepts-index.md zijn actueel.")
+        return 1 if (src_changed or cpt_changed) else 0
+
+    state = lambda c: "bijgewerkt" if c else "ongewijzigd"
+    print(f"sources-index.md ({state(src_changed)}): {src_count} entries across "
+          f"{len(cluster_counts)} clusters, {analysis_count} analyses")
     for cluster, n in cluster_counts.items():
         print(f"  {n:3d}  {cluster}")
 
-    cpt_count, alias_count = regen_concepts_index()
-    print(f"\nconcepts-index.md: {cpt_count} concepts, {alias_count} alias mappings")
+    print(f"\nconcepts-index.md ({state(cpt_changed)}): {cpt_count} concepts, "
+          f"{alias_count} alias mappings")
     return 0
 
 

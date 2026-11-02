@@ -70,7 +70,7 @@ stubs worden de stubs met het hoogste `bron-count` als eerste gepresenteerd.
 
 ## Presentatietemplate
 
-Presenteer de lijst ná het lint-rapport (na de 7 standaard-checks) als volgt:
+Presenteer de lijst ná het lint-rapport (na de 8 standaard-checks) als volgt:
 
 ```
 ## Vulbare stubs (LINT-01)

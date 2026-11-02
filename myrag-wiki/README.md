@@ -75,7 +75,10 @@ niet in `CLAUDE.md`.
 - qmd CLI geïnstalleerd (upstream, <https://github.com/tobi/qmd>). De skills zoeken via de MCP-server en herindexeren via Bash met `qmd update && qmd embed`; een fork is niet meer nodig.
 - De MCP-server staat in `.mcp.json` geregistreerd als `qmd-feat` (historische naam) en start automatisch wanneer de plugin enabled is. Het commando is `${HOME}/.local/bin/qmd`, een absoluut pad in plaats van een PATH-lookup: Claude Code start ook vanuit de Desktop-app, waar `~/.local/bin` niet altijd in PATH zit. Zorg dus dat de qmd-binary daar staat of daarheen symlinkt. De skills roepen de CLI om dezelfde reden aan via `"$HOME/.local/bin/qmd"`.
 - Python 3 voor `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`
-  (script wordt vanuit de vault root aangeroepen; vindt `wiki/` via cwd of via een vault-pad als argv[1])
+  (script wordt vanuit de vault root aangeroepen; vindt `wiki/` via cwd of via een vault-pad als eerste argument).
+  Dit script is de enige schrijver van `wiki/sources-index.md` en `wiki/concepts-index.md`; skills en agents
+  bewerken die nooit met de hand. `--check` meldt drift zonder te schrijven (exit 1).
+  Regressie-eval na elke wijziging aan het script: `python3 scripts/regen_quick_indexes_eval.py` (exit 1 bij een failure).
 
 ## Configuratie
 

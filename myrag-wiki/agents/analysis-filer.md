@@ -29,7 +29,8 @@ You file a valuable Q&A exchange as a permanent wiki analysis page.
 Toon de volledige concept-pagina met:
 - Pad: `wiki/analysis/YYYY-MM-DD-[slug].md`
 - Frontmatter: title, aliases, type: analysis, tags, created, updated, sources
-- Secties: ## Vraag, ## Antwoord, ## Connections, ## Sources
+- Secties: ## Summary, ## Vraag, ## Antwoord, ## Connections, ## Sources
+- `## Summary`: 1-2 zinnen; de eerste zin (≤160 tekens) wordt de regel in `wiki/sources-index.md` (sectie "Analyses")
 - Alle interne links als piped wikilinks: `[[kebab-filename|Display Text]]`
 
 Sluit af met: "Wil je deze pagina opslaan?"
@@ -38,7 +39,8 @@ Sluit af met: "Wil je deze pagina opslaan?"
 1. Write `wiki/analysis/YYYY-MM-DD-[slug].md` with the approved content
 2. Append the new page to `index.md` under the appropriate category
 3. Append to `log.md`: `## [YYYY-MM-DD] analysis | [Title]` + one-line body describing the question answered
-4. Add a one-liner to `wiki/sources-index.md` under the most fitting cluster
+
+Do **not** edit `wiki/sources-index.md` or `wiki/concepts-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after you finish.
 
 **Wikilink rule:** All internal links MUST use piped syntax `[[kebab-filename|Display Text]]`.
 

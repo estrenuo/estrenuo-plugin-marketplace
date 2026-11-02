@@ -34,7 +34,7 @@ You never modify files in `raw/`. You own everything in `wiki/`.
     ├── concepts/          ← ideas, topics, themes, frameworks
     ├── sources/           ← one summary page per ingested source
     ├── analysis/          ← comparisons, syntheses, presentations, Q&A
-    ├── sources-index.md   ← one-liner per source, grouped by cluster
+    ├── sources-index.md   ← one-liner per source, grouped by cluster (+ analyses)
     ├── concepts-index.md  ← one-liner per concept + alias map
     └── ingest-state.md    ← raw → wiki tracking table
 ```
@@ -144,23 +144,21 @@ One-line body describing what changed or was answered.
 
 Twee summary-augmented indexes voor snelle lookup:
 
-- `wiki/sources-index.md` — one-liner per source, gegroepeerd per thematisch cluster (uit `tags:` frontmatter), gesorteerd op datum binnen cluster (nieuwste eerst).
+- `wiki/sources-index.md` — one-liner per source (`sources/`, `recipes/`, `travel/`), gegroepeerd per thematisch cluster (uit `tags:` frontmatter), gesorteerd op datum binnen cluster (nieuwste eerst). Onderaan een sectie "Analyses" met de pagina's uit `wiki/analysis/`.
 - `wiki/concepts-index.md` — one-liner per concept-pagina, alfabetisch, plus een alias-naar-canonical-filename map voor accurate piped wikilinks.
 
-**Format per row:** `- [[slug|Title]] (date, author) — first sentence of ## Summary (≤160 chars)`.
+**Format per row:** sources `- [[slug|Title]] (date, author) — first sentence of ## Summary (≤160 chars)`, waarbij `(date, author)` uit de frontmatter komt (`date` of `date_published`, `author`) en wegvalt als die velden ontbreken. Concepts: `- [[slug|Title]] — first sentence of ## Summary`.
 
-**Maintenance:** auto-genereerbaar via `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`. Run vanuit de vault root:
+**Eigenaar:** `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py` is de enige schrijver van beide bestanden. Bewerk ze nooit met de hand: de volgende run overschrijft handwerk. Wil je een regel anders, pas dan de frontmatter of `## Summary` van de pagina aan en draai het script. Run vanuit de vault root:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"           # schrijft alleen bij wijziging
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py" --check   # exit 1 bij drift, schrijft niets
 ```
 
-Het script scant `wiki/concepts/*.md`, `wiki/sources/*.md` en eventuele extra subdirs (uitbreidbaar in `CLUSTERS`-lijst bovenin het script), pakt frontmatter + eerste zin van `## Summary`, en overschrijft beide indexen. Idempotent.
+Het script scant `wiki/concepts/`, `wiki/sources/`, `wiki/recipes/`, `wiki/travel/` en `wiki/analysis/`, pakt frontmatter + eerste zin van `## Summary`, en schrijft beide indexen opnieuw. Idempotent; `created:` blijft staan, `updated:` verandert alleen bij een echte wijziging.
 
-**Wanneer regenereren vs. patchen:**
-- Kleine toevoegingen (1 nieuwe bron) → patch direct in het juiste cluster.
-- Bigger changes (renames, retagging, summary rewrites in many pages) → run het script end-to-end.
-- Na een `lint`-pass die veel summaries heeft aangeraakt → run het script.
+**Wanneer:** altijd één keer aan het einde van elke workflow die een pagina heeft aangemaakt of gewijzigd (ingest, gearchiveerde query, autoresearch, lint-fixes), vóór `qmd update`. Er is geen patch-modus meer.
 
 ---
 
