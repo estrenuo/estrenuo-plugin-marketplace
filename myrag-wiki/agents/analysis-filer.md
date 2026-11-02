@@ -37,15 +37,21 @@ Sluit af met: "Wil je deze pagina opslaan?"
 
 **Step 3 — On approval:**
 1. Write `wiki/analysis/YYYY-MM-DD-[slug].md` with the approved content
-2. Append the new page to `index.md` under the appropriate category
-3. Append to `log.md`: `## [YYYY-MM-DD] analysis | [Title]` + one-line body describing the question answered
+2. End with the Registerblok (see below) for `index.md` and `log.md`
 
-Do **not** edit `wiki/sources-index.md` or `wiki/concepts-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after you finish.
+**Registers:** you never write `index.md`, `log.md`, `wiki/ingest-state.md`, `wiki/sources-index.md` or `wiki/concepts-index.md`. One script owns each of them, and the calling skill runs it. You end your answer with a **Registerblok**: a fenced bash block with the exact `register.py` commands, in the order given below, which the caller runs unchanged from the vault root. Use real paths and titles, no placeholders. For the `--section`/`--group` of `index add`, pick an existing `## ` heading and bold group label from `index.md` (read it; do not invent one). Source pages (`wiki/sources/`, `recipes/`, `travel/`) never get an `index add`.
+
+Registerblok for this agent:
+
+```bash
+R="${CLAUDE_PLUGIN_ROOT}/scripts/register.py"
+python3 "$R" index add --page wiki/analysis/YYYY-MM-DD-[slug].md --section "Analysis" --summary "[één zin]"
+python3 "$R" log --type analysis --title "[Title]" --body "[één regel: welke vraag is beantwoord]"
+```
 
 **Wikilink rule:** All internal links MUST use piped syntax `[[kebab-filename|Display Text]]`.
 
 ## Error handling
 
 - No Q&A text in prompt: report "Geen Q&A-tekst gevonden in de prompt. Plak de tekst direct in de agentaanroep." and stop.
-- Write of main page fails: do not update index.md or log.md. Report the error.
-- index.md or log.md update fails: report it separately (main page is already saved).
+- Write of main page fails: return no Registerblok. Report the error.

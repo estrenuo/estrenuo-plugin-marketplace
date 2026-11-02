@@ -40,18 +40,14 @@ Dit voorkomt dubbele verwerking wanneer de ingest-skill meerdere keren in dezelf
 
 Detecteer welke bestanden verwerkt moeten worden voordat je begint.
 
-**Scan raw/:**
+**Draai de detectie via Bash, vanuit de vault root:**
 ```bash
-find raw/ -maxdepth 1 -type f \( -name "*.md" -o -name "*.pdf" \) | sort
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state status
 ```
-Sla `raw/assets/` altijd over — dit zijn afbeeldingen, geen bronnen (INGS-06).
+Het script scant `raw/` (maxdepth 1, alleen `.md` en `.pdf`, nooit `raw/assets/` — INGS-06), vergelijkt met de tabel in `wiki/ingest-state.md` en geeft JSON met `new`, `modified`, `unchanged` (aantal), `deleted`, `broken_rows` en `multi_page` (Modified raws met meer dan één gekoppelde pagina). Voor één bestand: `--raw "raw/<bestand>"`.
+De regels die het script toepast staan in `references/detection-logic.md` (De Morgan: Modified alleen als mtime ÉN hash verschillen).
 
-**Vergelijk met wiki/ingest-state.md.** Lees het bestand en classificeer elk gevonden bestand.
-Zie `references/detection-logic.md` voor de exacte regels:
-- De Morgan-regel (mtime ÉN hash — niet alleen mtime)
-- Alle 4 detectiemodi: New / Modified / Unchanged / Deleted
-- Bash-commando's voor mtime en hash
-- Multi-page check bij Modified
+Staat er iets in `broken_rows`, draai dan eerst `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state check --fix` en meld dat.
 
 **Toon classificatie vóór je begint:**
 ```
@@ -97,10 +93,13 @@ Gebruik dit voor geforceerde herverwerking ongeacht mtime/hash-status.
 **PDF-bronnen — delegeer naar `pdf-ingest-agent`:** als het te verwerken bestand
 een `.pdf` is (geldt voor zowel auto-modus als force-ingest), roep de Task tool
 aan met `subagent_type: pdf-ingest-agent` en geef het PDF-pad als input. De
-agent doet chunked reading (max 20 pagina's per call) en voert de volledige
-ingest-workflow uit, behalve de quick-indexes. Sla Stap 4 voor dit specifieke
-bestand over en neem het resultaat van de agent op in het Stap 5-rapport. De
-regen in Stap 9.5 draait na de hele batch, ook voor de PDF.
+agent doet chunked reading (max 20 pagina's per call) en schrijft de wiki-pagina's.
+Registers schrijft de agent niet: hij sluit af met een **Registerblok** (de exacte
+`register.py`-aanroepen). Voer dat blok ongewijzigd uit via Bash, vanuit de vault
+root, in de gegeven volgorde, en controleer elke uitvoer (`status` mag niet `error`
+zijn). Sla Stap 4 voor dit bestand over en neem het resultaat op in het Stap
+5-rapport. De regen in Stap 9.5 draait na de hele batch, ook voor de PDF.
+Draai PDF-agents parallel als je wilt: alleen jij schrijft de registers.
 
 ---
 
@@ -123,11 +122,11 @@ Volledige stappen met why-zinnen en format-specs in `references/ingest-steps.md`
 3. Schrijf/update wiki/sources/YYYY-MM-DD-slug.md
 4. Update wiki/entities/*.md (nieuwe info, tegenstrijdigheden → ## Open questions)
 5. Update wiki/concepts/*.md (idem) — **Stap 5a: canonical-doc-check verplicht** voor feitelijk-klinkende technische claims uit derivative bronnen over Claude Code, MCP, Task-tool of memory. Eén check per claim vóór schrijven; bij tegenspraak landt de claim onder `## Open questions` in plaats van als feit. Details in `references/ingest-steps.md`.
-6. Update index.md (entry toevoegen of verversen)
+6. `register.py index add` voor elke **nieuwe** concept-, entity- of analysepagina (bronpagina's niet: die staan in sources-index)
 7. (vervallen) Quick-indexes nooit met de hand bewerken — zie Stap 9.5
-8. Append aan log.md (type: ingest of update)
-9. Update wiki/ingest-state.md (mtime, hash, wikilink met `\|`-escape, datum)
-9.5. (Post-batch, altijd bij count ≥ 1) Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
+8. `register.py log --type ingest` (nieuw) of `--type update` (gewijzigd)
+9. `register.py ingest-state set --raw … --page …` — altijd als laatste per bestand
+9.5. (Post-batch, altijd bij count ≥ 1) Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` en daarna `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats`
 10. Draai via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed` — altijd als laatste stap, post-batch
 
 **Multi-page geval:** Als Modified bestand meerdere wikilinks heeft in de Source page cel, voer dan de multi-page dialoog uit vóór stap 2. Details in `references/ingest-steps.md`.
@@ -187,6 +186,6 @@ sources in cluster "Overig" zijn beland: stel de gebruiker voor om de
 
 - Maak geen tweede bronpagina voor een al-getrackte raw — edit de bestaande rij
 - Stap 2 (bespreek met gebruiker) nooit overslaan
-- `stat -f` is macOS BSD-syntax — deze skill werkt alleen op macOS
-- ingest-state.md tabel: gebruik `\|` als pipe-escape in wikilinks binnen tabelcellen
+- Schrijf nooit zelf in `index.md`, `log.md` of `wiki/ingest-state.md`; alleen `scripts/register.py` schrijft ze (ook de `\|`-escape, mtime en hash)
 - Bewerk `wiki/sources-index.md` en `wiki/concepts-index.md` nooit met de hand; alleen `regen-quick-indexes.py` schrijft ze
+- Controleer na elke scriptaanroep de JSON-uitvoer; bij `"status": "error"` stop je voor dat bestand en meld je de fout

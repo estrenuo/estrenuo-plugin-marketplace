@@ -39,9 +39,18 @@ After approval, fill each approved stub following CLAUDE.md page conventions:
 - Section guidance by type: entity stubs → ## Summary + ## Details + ## Connections; concept stubs → ## Summary + ## Details + ## Connections + ## Open questions; source stubs → ## Summary + ## Details + ## Sources.
 - All internal links MUST use piped wikilink syntax: `[[kebab-filename|Display Text]]`
 
-After filling each stub: check if the page has an entry in `index.md`. If not, add a one-liner entry under the appropriate category.
+The first sentence of the `## Summary` you write becomes the one-liner in the quick-indexes, so keep it ≤160 characters.
 
-Do **not** edit `wiki/concepts-index.md` or `wiki/sources-index.md`. Only `regen-quick-indexes.py` writes them; the calling skill runs it after you finish. The first sentence of the `## Summary` you write becomes the one-liner there, so keep it ≤160 characters.
+**Registers:** you never write `index.md`, `log.md`, `wiki/ingest-state.md`, `wiki/sources-index.md` or `wiki/concepts-index.md`. One script owns each of them, and the calling skill runs it. You end your answer with a **Registerblok**: a fenced bash block with the exact `register.py` commands, in the order given below, which the caller runs unchanged from the vault root. Use real paths and titles, no placeholders. For the `--section`/`--group` of `index add`, pick an existing `## ` heading and bold group label from `index.md` (read it; do not invent one). Source pages (`wiki/sources/`, `recipes/`, `travel/`) never get an `index add`.
+
+Registerblok for this agent:
+
+```bash
+R="${CLAUDE_PLUGIN_ROOT}/scripts/register.py"
+# one line per filled concept/entity stub; the script skips pages that are already listed
+python3 "$R" index add --page wiki/concepts/<slug>.md --section "<## kop>" --group "<vet label>" --summary "<één zin>"
+python3 "$R" log --type lint --title "Stub-vulling: N gevuld, M overgeslagen" --body "Gevuld: [[slug|Titel]], …" --body "Overgeslagen: <stub> — <reden>"
+```
 
 ## Error handling
 

@@ -89,9 +89,10 @@ Dit is een harde gate — sla hem nooit over, ook niet bij een "evident" antwoor
 `subagent_type: analysis-filer` en plak de volledige Q&A-tekst (vraag + antwoord
 inclusief alle wikilinks) **letterlijk** in de invocation prompt. De agent heeft
 geen toegang tot deze conversatie-context, dus de Q&A-tekst moet expliciet in de
-prompt staan. De agent doet substappen 5.1 t/m 5.3 in één keer en presenteert
-een draft ter goedkeuring vóór schrijven. Na de agent voer jij zelf 5.4 en 5.5
-uit.
+prompt staan. De agent schrijft na goedkeuring de pagina (5.1) en sluit af met
+een **Registerblok**: de exacte `register.py`-aanroepen voor 5.2 en 5.3. Voer dat
+blok ongewijzigd uit via Bash, vanuit de vault root, en controleer de uitvoer
+(`status` mag niet `error` zijn). Daarna voer jij 5.4 en 5.5 uit.
 
 Alleen als de gebruiker de delegatie afwijst of als de agent niet beschikbaar is,
 voer je de vijf substappen hieronder handmatig uit.
@@ -131,18 +132,21 @@ De `## Summary`-sectie is verplicht. Zonder Summary kan `${CLAUDE_PLUGIN_ROOT}/s
 
 **Waarom:** Gestandaardiseerde frontmatter en secties zorgen dat de pagina vindbaar is via qmd, correct wordt weergegeven in de quick-indexes, en consistent is met de rest van de wiki.
 
-**5.2 — Update index.md**
+**5.2 — Registreer in index.md**
 
-Voeg de nieuwe pagina toe aan `index.md` onder de juiste categorie als:
-`- [[kebab-slug|Vraag of titel]] — één zin beschrijving`
+Draai via Bash, vanuit de vault root:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page wiki/analysis/[kebab-slug].md --section "Analysis" --summary "[één zin]"`
+
+Gebruik `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index sections` als je de sectienaam niet zeker weet. Schrijf nooit zelf in `index.md`: alleen het script doet dat.
 
 **Waarom:** index.md is de inhoudscatalogus van de wiki. Elke nieuwe pagina moet erin staan om orphan te voorkomen.
 
-**5.3 — Voeg een log-entry toe**
+**5.3 — Log via register.py**
 
-Voeg aan het einde van `log.md` toe:
-`## [YYYY-MM-DD] analysis | [Vraag of titel]`
-`Antwoord gearchiveerd als wiki/analysis/[slug].md na gebruikersvraag.`
+Draai via Bash:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type analysis --title "[Vraag of titel]" --body "Antwoord gearchiveerd als wiki/analysis/[slug].md na gebruikersvraag."`
+
+Het script zet de entry onderaan `log.md` en schrijft alleen bij.
 
 **Waarom:** log.md is append-only chronologisch record. Iedere wijziging aan de wiki hoort erin.
 
@@ -151,7 +155,7 @@ Voeg aan het einde van `log.md` toe:
 Draai via Bash, vanuit de vault root:
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`
 
-Het script neemt de nieuwe pagina op in de sectie "Analyses" van `wiki/sources-index.md`, met de eerste zin van `## Summary`. Bewerk de quick-indexes nooit met de hand: alleen dit script schrijft ze.
+Het script neemt de nieuwe pagina op in de sectie "Analyses" van `wiki/sources-index.md`, met de eerste zin van `## Summary`. Bewerk de quick-indexes nooit met de hand: alleen dit script schrijft ze. Draai daarna `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats` (telt `## Stats` in `index.md` opnieuw).
 
 **Waarom:** Quick-indexes geven per-rij context zodat de query-workflow later de juiste 3-5 pagina's kan selecteren zonder tientallen pagina's te openen. Een handregel verdwijnt bij de volgende regen.
 

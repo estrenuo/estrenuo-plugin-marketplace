@@ -25,8 +25,8 @@ You never modify files in `raw/`. You own everything in `wiki/`.
 ```
 <vault-root>/
 ├── CLAUDE.md              ← this file (schema)
-├── index.md               ← content catalog (you update on every ingest)
-├── log.md                 ← append-only chronological record
+├── index.md               ← content catalog (written by register.py)
+├── log.md                 ← append-only chronological record (written by register.py)
 ├── raw/                   ← source documents (immutable, human-managed)
 │   └── assets/            ← downloaded images referenced by sources
 └── wiki/                  ← all LLM-generated pages (you own this)
@@ -121,7 +121,7 @@ De skills triggeren automatisch op natuurlijke taal. Zie de SKILL.md-bestanden i
 
 ## Quality rules
 
-- **No orphan pages**: every new page must be linked from at least one other page and from `index.md`
+- **No orphan pages**: every new page must be linked from at least one other page, and from `index.md` (concepten, entities, analyses) or `wiki/sources-index.md` (bronnen; via de regen)
 - **No silent contradictions**: if new source contradicts existing wiki, flag it explicitly in the relevant page under `## Open questions`
 - **One source of truth per fact**: if the same fact appears on multiple pages, one page owns it and the others link to it
 - **Stubs are OK, gaps are not**: a stub is a placeholder. A gap is an important concept with no page at all. Stubs get created; gaps get flagged in lint.
@@ -129,16 +129,34 @@ De skills triggeren automatisch op natuurlijke taal. Zie de SKILL.md-bestanden i
 
 ---
 
+## Registers: één schrijver per bestand
+
+`index.md`, `log.md` en `wiki/ingest-state.md` worden alleen geschreven door `${CLAUDE_PLUGIN_ROOT}/scripts/register.py`; de quick-indexes alleen door `regen-quick-indexes.py`. Skills roepen die scripts aan via Bash. Agents schrijven geen registers: ze sluiten af met een Registerblok (de exacte scriptaanroepen) en de aanroepende skill voert dat uit. Bewerk deze bestanden nooit met de hand. De formaten hieronder zijn wat de scripts schrijven.
+
 ## index.md conventions
 
-Organized by category. Each entry: `- [[Page Name]] — one-line description (N sources)`.
-Updated on every ingest, every new analysis page, every filled stub.
+Catalogus van concepten, entities, analyses en hubs, gegroepeerd per `## `-sectie en eventueel per vet groepslabel. Bronpagina's (`sources/`, `recipes/`, `travel/`) staan in `wiki/sources-index.md`, niet hier.
+Each entry: `- [[slug|Titel]] — één zin (N sources)`, met titel en N uit de frontmatter.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index sections
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page wiki/concepts/<slug>.md --section "<## kop>" [--group "<vet label>"] --summary "<één zin>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats      # vervangt alleen ## Stats
+```
+
+Het script voegt niets dubbel toe en laat de rest van het bestand (ook gecureerde tekst en de frontmatter, op `updated:` na) ongemoeid. Voor het cureren van groepen en cluster-teksten is er geen workflow: dat doet de gebruiker of de hoofdsessie op verzoek, gelogd als `update`.
 
 ## log.md conventions
 
-Append-only. Each entry starts with `## [YYYY-MM-DD] type | Title`.
-Types: `ingest`, `query`, `lint`, `update`, `analysis`.
-One-line body describing what changed or was answered.
+Append-only, nieuwste onderaan. Each entry starts with `## [YYYY-MM-DD] type | Title`.
+Types: `ingest`, `update`, `query`, `analysis`, `lint`, `fix`.
+Body: één of meer regels over wat er veranderde of werd beantwoord.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type ingest --title "<Titel>" --body "<één regel>"
+```
+
+Het script schrijft alleen bij, nooit eerder in het bestand, en slaat een exacte herhaling van de laatste entry over.
 
 ## Quick-indexes conventions
 
@@ -181,10 +199,20 @@ Rules:
 - **Source page** — wikilink naar de bijbehorende wiki-pagina (piped form). Mag **meerdere wikilinks bevatten gescheiden door komma's** als de raw meerdere wiki-pagina's voedt. Primary page eerst (de bron-summary in `sources/`), derivatives erna.
 - **Table pipe escaping**: in een markdown-tabelcel MOET de `|` tussen slug en display-text geschreven worden als `\|`. Voorbeeld: `[[2026-04-26-some-source\|Some Source]]`.
 - **Ingested** — datum van meest recente succesvolle ingest of update (`YYYY-MM-DD`).
-- Rijen alfabetisch op **File** voor stabiele diffs.
+- Rijen alfabetisch op **File** (hoofdletterongevoelig) voor stabiele diffs.
 - Track `.md` en `.pdf` only.
 
-**Multi-page references section** — `wiki/ingest-state.md` MOET een `## Multi-page references`-sectie bevatten die elke raw oplijst waarvan de Source page-cel meer dan één wikilink heeft. Deze sectie is de canonieke plek om te scannen vóór een geforceerde `ingest <filename>` op een raw die meerdere pagina's voedt.
+**Multi-page references section** — `wiki/ingest-state.md` MOET een `## Multi-page references`-sectie bevatten (tabel `| Raw | Primary (`sources/`) | Derivatives | Notes |`) die elke raw oplijst waarvan de Source page-cel meer dan één wikilink heeft. Deze sectie is de canonieke plek om te scannen vóór een geforceerde `ingest <filename>` op een raw die meerdere pagina's voedt.
+
+**Schrijven en lezen via het script:**
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state status                                   # New/Modified/Unchanged/Deleted (leest alleen)
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<bestand>" --page wiki/sources/<slug>.md [--page …]
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state check [--fix]                            # kapotte rijen vinden / escape en volgorde herstellen
+```
+
+`set` berekent mtime en hash zelf, maakt of ververst de ene rij, schrijft `\|`, houdt de volgorde, en zet een nieuwe multi-page-rij (Notes leeg) als de cel meer dan één link krijgt. Bestaande Notes raakt het niet.
 
 ---
 

@@ -19,7 +19,7 @@ allowed-tools: Read Grep Bash Edit Write Task mcp__plugin_myrag-wiki_qmd-feat__q
 4. Vraag welke items de gebruiker nu wil fixen.
 5. Voer geselecteerde fixes uit en werk qmd-index bij als er wijzigingen zijn.
 
-## Stap 1: Scan wiki/ — 8 check-categorieën
+## Stap 1: Scan wiki/ — 9 check-categorieën
 
 Zodat alle structuur- en linkproblemen in de wiki systematisch in kaart worden gebracht
 vóór er fixes worden gedaan.
@@ -75,6 +75,17 @@ na een wijziging de regen niet is gedraaid.
   Schrijft niets.
 - Neem drift op onder Middel. De fix is altijd de regen zelf, nooit een
   handmatige correctie in de index.
+
+**Check 9: Registerformaat — via tool**
+
+Doel: kapotte rijen in `wiki/ingest-state.md` vinden vóór ze de detectie breken
+(bijvoorbeeld een `|` zonder backslash in een wikilink, waardoor een rij zes
+cellen krijgt).
+
+- Draai vanuit de vault-root: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state check --plain`
+- Exit 0: schoon. Exit 1: de uitvoer noemt per rij het probleem. Schrijft niets.
+- Neem problemen op onder Hoog. De fix is `ingest-state check --fix`
+  (herstelt escape en volgorde), nooit een handmatige edit.
 
 ---
 
@@ -156,8 +167,10 @@ de bulk-loop (Modus B, LINT-03), de vulprocedure, en de randgevallen.
 gebruiker "vul alle stubs" zegt, roep de Task tool aan met `subagent_type: stub-filler`
 in plaats van de modus-loop hier ter plaatse uit te voeren. De agent toont alle vulbare
 stubs in één overzicht en wacht op goedkeuring vóór schrijven — dat is efficiënter dan
-per-stub interactie binnen de skill. De agent raakt de quick-indexes niet: draai na de
-agent zelf `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`.
+per-stub interactie binnen de skill. De agent schrijft geen registers: hij sluit af met
+een **Registerblok** (de exacte `register.py`-aanroepen). Voer dat blok ongewijzigd uit
+via Bash, vanuit de vault root, controleer de uitvoer, en draai daarna
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"`.
 
 Na afloop van Stap 2b: ga naar Stap 3.
 
@@ -171,7 +184,7 @@ urgent zijn en welke later aangepakt worden.
 Presenteer bevindingen als geprioriteerde lijst:
 
 - **Kritiek** (broken links, bare-alias die Obsidian kapotmaakt): direct actie nodig
-- **Hoog** (orphans, contradictions): structuurproblemen die de wiki-integriteit raken
+- **Hoog** (orphans, contradictions, kapotte register-rijen): structuurproblemen die de wiki-integriteit raken
 - **Middel** (missing cross-refs, stale claims, quick-index drift): kwaliteitsproblemen
 - **Laag** (data gaps): groei-suggesties
 
@@ -189,6 +202,7 @@ Sluit af met tellerstabel:
 | Stale claims | X |
 | Data gaps | X |
 | Quick-index drift | ja / nee |
+| Kapotte register-rijen | X |
 
 ---
 
@@ -204,9 +218,9 @@ Wacht op antwoord. Voer alleen de geselecteerde fixes uit.
 Documenteer elke fix: welke pagina is aangepast, wat is gewijzigd.
 
 Na het uitvoeren van fixes:
-- Draai `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` (schrijft alleen als er iets veranderde; bewerk de quick-indexes nooit met de hand)
-- Voeg een entry toe aan `log.md` van type `lint` met een samenvatting van de fixes
-- Werk `index.md` bij als nieuwe pagina's zijn aangemaakt of hernoemd
+- Draai `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` (schrijft alleen als er iets veranderde; bewerk de quick-indexes nooit met de hand) en daarna `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats`
+- Log via `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type lint --title "<samenvatting>" --body "<per fix één regel>"` (schrijf nooit zelf in `log.md`)
+- Registreer nieuwe concept-, entity- of analysepagina's via `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page … --section … --summary …` (schrijf nooit zelf in `index.md`)
 
 ---
 

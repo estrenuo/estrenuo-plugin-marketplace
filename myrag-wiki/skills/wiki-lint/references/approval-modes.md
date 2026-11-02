@@ -89,11 +89,13 @@ Voer voor elke stub op de te-vullen-lijst de volgende stappen uit in exacte volg
 7. **Herbouw qmd-index**: draai daarna via Bash `"$HOME/.local/bin/qmd" update && "$HOME/.local/bin/qmd" embed`,
    onder dezelfde voorwaarde.
 
-Na alle stubs: schrijf één samenvattende entry aan `log.md`:
-```
-## [YYYY-MM-DD] lint | Stub-vulling: N gevuld, M overgeslagen (LINT-02/03)
+Na alle stubs: log één samenvattende entry via Bash:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type lint --title "Stub-vulling: N gevuld, M overgeslagen (LINT-02/03)" \
+  --body "Gevuld: [[slug|Titel]], …" --body "Overgeslagen: <stub> — <reden>"
 ```
 Vermeld per overgeslagen stub de reden (gebruiker koos 'nee' / telcheck mislukt / bronpagina onleesbaar).
+Schrijf nooit zelf in `log.md`; het script zet de entry onderaan.
 
 ---
 

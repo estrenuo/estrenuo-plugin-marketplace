@@ -79,6 +79,10 @@ niet in `CLAUDE.md`.
   Dit script is de enige schrijver van `wiki/sources-index.md` en `wiki/concepts-index.md`; skills en agents
   bewerken die nooit met de hand. `--check` meldt drift zonder te schrijven (exit 1).
   Regressie-eval na elke wijziging aan het script: `python3 scripts/regen_quick_indexes_eval.py` (exit 1 bij een failure).
+- Python 3 voor `${CLAUDE_PLUGIN_ROOT}/scripts/register.py`, de enige schrijver van `index.md`, `log.md` en
+  `wiki/ingest-state.md` (subcommando's `log`, `index sections|add|stats`, `ingest-state status|set|check`;
+  JSON-uitvoer, `--plain`, `--dry-run`). Alleen standaardbibliotheek. Skills roepen het aan; agents geven een
+  Registerblok terug dat de skill uitvoert. Eval: `python3 scripts/register_eval.py`.
 
 ## Configuratie
 

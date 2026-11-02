@@ -12,7 +12,7 @@ Formuleer 2-5 kernpunten en vraag of de framing klopt. Bij updates: focus op wat
 
 ## Stap 3: Schrijf of update de bronpagina
 
-Schrijf een nieuwe pagina in `wiki/sources/YYYY-MM-DD-slug.md` (nieuw bestand) of update de bestaande pagina (bij re-ingest). Maak nooit een tweede bronpagina voor een al-getrackte raw — edit de bestaande en voeg de nieuwe wikilink toe aan de Source page cel.
+Schrijf een nieuwe pagina in `wiki/sources/YYYY-MM-DD-slug.md` (nieuw bestand) of update de bestaande pagina (bij re-ingest). Maak nooit een tweede bronpagina voor een al-getrackte raw — edit de bestaande pagina; een extra pagina voor dezelfde raw komt in de Source page-cel via `ingest-state set --page` (Stap 9).
 
 ## Stap 4: Update wiki/entities/
 
@@ -62,25 +62,40 @@ Eén check per claim is genoeg — niet meerdere bronnen vergelijken. Doel is de
 - "Postgres ondersteunt JSONB" — niet over Claude Code/MCP/Task/memory
 - Claim afkomstig uit `docs.claude.com` zelf — niet derivative
 
-## Stap 6: Update index.md
+## Stap 6: Registreer nieuwe pagina's in index.md
 
-Voeg de nieuwe bronpagina toe of ververs de bestaande entry. Formaat per entry: `- [[slug|Titel]] — één-zin beschrijving (N bronnen)`. Zonder deze stap raakt index.md verouderd en verliest het zijn functie als inhoudscatalogus.
+`index.md` heeft één schrijver: `scripts/register.py index`. Schrijf er nooit zelf in.
+
+Roep het script aan voor elke **nieuwe** concept-, entity- of analysepagina uit deze run. Bronpagina's (`sources/`, `recipes/`, `travel/`) niet: die staan in `wiki/sources-index.md`, en het script slaat ze over (`"status": "skipped"`).
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index sections        # welke secties en groepen er zijn
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index add --page wiki/concepts/<slug>.md --section "<## kop>" [--group "<vet label>"] --summary "<één zin>"
+```
+
+Kies de sectie en groep uit `index sections`; verzin er geen. Het script schrijft `- [[slug|Titel]] — <samenvatting> (N sources)`, met titel en N uit de frontmatter. Bestaat de slug al in index.md, dan voegt het niets toe (`already_listed` of `unchanged`). Een sectie die alleen uit groepen bestaat, vraagt om `--group` (exit 2 met kandidaten).
 
 ## Stap 7: (vervallen) Quick-indexes niet met de hand bewerken
 
 `wiki/sources-index.md` en `wiki/concepts-index.md` hebben één eigenaar: `${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py`. Bewerk ze nooit met de hand, ook niet voor één bron: de volgende run overschrijft handwerk, en een handregel wijkt af in titel, metadata, samenvatting of cluster. De regen draait één keer na de batch, in Stap 9.5.
 
-## Stap 8: Append aan log.md
+## Stap 8: Log via register.py
 
-Voeg één entry toe onderaan `log.md`:
-- `## [YYYY-MM-DD] ingest | Titel` voor nieuwe bestanden
-- `## [YYYY-MM-DD] update | Titel` voor gewijzigde bestanden
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" log --type ingest --title "<Titel>" --body "<één regel: wat is er aangemaakt of bijgewerkt>"
+```
 
-Log.md is append-only — nooit bestaande entries wijzigen of verwijderen.
+Gebruik `--type ingest` voor nieuwe en `--type update` voor gewijzigde bestanden. `--body` mag vaker. Het script zet de entry onderaan als `## [YYYY-MM-DD] type | Titel`, schrijft alleen bij (append-only) en slaat een exacte herhaling van de laatste entry over. Schrijf nooit zelf in `log.md`.
 
-## Stap 9: Update wiki/ingest-state.md
+## Stap 9: ingest-state via register.py (altijd als laatste per bestand)
 
-Ververs de rij: mtime, hash, source-page link en ingested-datum. Gebruik `\|` als tabel-escape voor de wikilink-pipe (bijv. `[[slug\|Titel]]`). Maak geen nieuwe rij als de raw al getrackt is — edit de bestaande. Voeg bij meerdere bronpagina's de extra wikilink toe na een komma in de Source page cel.
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<bestand>" --page wiki/sources/<slug>.md [--page wiki/concepts/<slug>.md …]
+```
+
+Het script berekent mtime en hash zelf, maakt of ververst de ene rij van deze raw, schrijft links als `[[slug\|Titel]]`, houdt de rijen alfabetisch en zet de Ingested-datum op vandaag. Extra pagina's komen na een komma in de Source page-cel; heeft de rij daarna meer dan één link, dan zet het script een rij in `## Multi-page references` (Notes leeg) of vult die aan. Een bestaande rij krijgt geen dubbele link. Zonder `--page` ververst het alleen mtime, hash en datum.
+
+**Waarom als laatste:** valt de run hierna om, dan ziet de volgende detectie de raw nog als New of Modified en probeert het opnieuw. `index add` en `log` zijn idempotent, dus die herhaling geeft geen dubbele regels.
 
 ## Stap 9.5: Quick-indexes regenereren (post-batch)
 
@@ -96,6 +111,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"
 ```
 
 Het script is idempotent: leest alle pagina's in `wiki/sources/`, `wiki/recipes/`, `wiki/travel/`, `wiki/analysis/` en `wiki/concepts/`, en schrijft de twee index-bestanden opnieuw op basis van actuele frontmatter en `## Summary`-secties. Het schrijft alleen als de inhoud veranderde.
+
+Draai daarna `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats`. Dat telt de pagina's en de getrackte raws opnieuw en vervangt alleen de sectie `## Stats` in `index.md`.
 
 **Bevestig kort de output** (regel-totalen per cluster, en of elk bestand bijgewerkt of ongewijzigd is) zodat de gebruiker ziet dat de regeneratie geslaagd is.
 
@@ -130,6 +147,6 @@ Welke pagina('s) wil je updaten?
 - Stap 1 (lees bestand) is al uitgevoerd.
 - Stap 7 is vervallen; Stap 9.5 (regen) en Stap 10 (qmd update) draaien altijd, post-batch.
 
-**Stap M4:** Update de Ingested-datum in de ingest-state.md rij naar vandaag, ongeacht welke subset is bijgewerkt.
+**Stap M4:** Draai `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<bestand>"` (zonder `--page`, tenzij er een nieuwe pagina bij kwam). Dat ververst mtime, hash en de Ingested-datum, ongeacht welke subset is bijgewerkt.
 
 **Telling voor batch-count (INGS-01):** ongeacht welke subset wordt geüpdatet (alleen primair / alleen analyse / beide), telt deze raw als **1 bron** in de batch-count van het rapport. De count van de raw is onafhankelijk van het aantal wiki-pagina's dat erdoor geraakt wordt.
