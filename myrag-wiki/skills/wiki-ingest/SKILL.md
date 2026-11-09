@@ -57,7 +57,7 @@ Unchanged (N): [namen]
 Deleted/orphan (N): [namen]
 ```
 
-Verwerk alleen New en Modified. Vraag bij Deleted altijd bevestiging vóór actie.
+Verwerk alleen New en Modified. Vraag bij Deleted altijd bevestiging vóór actie. Bevestigt de gebruiker dat de raw weg mag, haal dan de rij weg met `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state remove --raw "raw/<bestand>"` (verwijdert ook de Multi-page-rij; de uitvoer noemt de pagina's die ernaar verwezen). Pas daarna `sources:` van die pagina's aan en log dat; de bronpagina zelf verwijder je alleen op expliciet verzoek.
 
 **Bereken de batch-count (INGS-01):**
 
