@@ -19,7 +19,7 @@ allowed-tools: Read Grep Bash Edit Write Task mcp__plugin_myrag-wiki_qmd-feat__q
 4. Vraag welke items de gebruiker nu wil fixen.
 5. Voer geselecteerde fixes uit en werk qmd-index bij als er wijzigingen zijn.
 
-## Stap 1: Scan wiki/ — 9 check-categorieën
+## Stap 1: Scan wiki/ — 10 check-categorieën
 
 Zodat alle structuur- en linkproblemen in de wiki systematisch in kaart worden gebracht
 vóór er fixes worden gedaan.
@@ -126,6 +126,26 @@ Doel: belangrijke concepten zonder eigen pagina signaleren voordat ze tot verwar
 - De agent rapporteert alleen, schrijft niet — neem de top-gaps over in het lint-rapport
   onder "Data gaps"
 
+**Check 10: Bronverificatie** — kandidaten via tool, oordeel via `source-verifier` agent
+
+Doel: de enige check die een claim naast de bron legt in plaats van naast andere
+wikipagina's. Checks 1–9 meten consistentie; een fout die vanaf het begin in een hub
+staat, komt daar nooit uit, en elke volgende sessie vertrouwt hem. Deze check vangt dat.
+
+- Draai vanuit de vault-root:
+  `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/verify_candidates.py" --limit 5 --plain`
+  (JSON zonder `--plain`). Schrijft niets. Het kiest concept- en entity-hubs die nooit
+  geverifieerd zijn of na hun `verified:`-datum zijn gewijzigd, meeste inkomende links
+  eerst, en geeft per hub de bijbehorende `raw/`-bestanden.
+- Roep per geselecteerde hub de Task tool aan met `subagent_type: source-verifier`,
+  met het hubpad en de `raw_files`-lijst als input. Hooguit 5 hubs per run: dit is een
+  steekproef die over de runs heen de wiki doorloopt, geen volledige audit.
+- Neem over in het rapport: per hub het eindoordeel, en elke `afwijkend`-claim met citaat.
+- Neem ook over: het aantal hubs met `unresolved_sources` en de lijst
+  `untraceable_source_pages` (bronpagina's zonder rij in `wiki/ingest-state.md`). Die
+  zijn principieel niet te verifiëren.
+- In een onbemande run: alleen rapporteren, geen `verified:` zetten.
+
 ---
 
 ## Stap 2: Identificeer vulbare stubs (LINT-01)
@@ -184,8 +204,8 @@ urgent zijn en welke later aangepakt worden.
 Presenteer bevindingen als geprioriteerde lijst:
 
 - **Kritiek** (broken links, bare-alias die Obsidian kapotmaakt): direct actie nodig
-- **Hoog** (orphans, contradictions, kapotte register-rijen): structuurproblemen die de wiki-integriteit raken
-- **Middel** (missing cross-refs, stale claims, quick-index drift): kwaliteitsproblemen
+- **Hoog** (orphans, contradictions, kapotte register-rijen, `afwijkend` uit check 10): problemen die de wiki-integriteit raken; een afwijking van de bron is een fout waarop andere pagina's leunen
+- **Middel** (missing cross-refs, stale claims, quick-index drift, `niet gevonden` uit check 10, onherleidbare bronpagina's): kwaliteitsproblemen
 - **Laag** (data gaps): groei-suggesties
 
 Per bevinding: pagina, probleem, aanbevolen actie.
@@ -203,6 +223,10 @@ Sluit af met tellerstabel:
 | Data gaps | X |
 | Quick-index drift | ja / nee |
 | Kapotte register-rijen | X |
+| Hubs geverifieerd deze run (verifieerbaar / niet) | X / X |
+| Afwijkende claims t.o.v. bron | X |
+| Hubs nog nooit of verouderd geverifieerd | X |
+| Bronpagina's zonder ingest-state-rij | X |
 
 ---
 
@@ -216,6 +240,15 @@ Vraag de gebruiker:
 
 Wacht op antwoord. Voer alleen de geselecteerde fixes uit.
 Documenteer elke fix: welke pagina is aangepast, wat is gewijzigd.
+
+Fixes uit check 10:
+- `afwijkend`: corrigeer de claim naar wat de bron zegt, of zet hem onder `## Open questions`
+  met het broncitaat als de gebruiker twijfelt. Werk `updated:` bij.
+- Eindoordeel verifieerbaar: zet `verified: <vandaag>` in de frontmatter, direct na
+  `updated:`. Zet `verified:` nooit op een pagina die je in dezelfde fix hebt
+  gecorrigeerd; die wordt bij de volgende run opnieuw gecontroleerd.
+- `niet gevonden`: geen automatische fix. Laat de gebruiker kiezen: bron toevoegen aan
+  `sources:`, claim verwijderen, of naar `## Open questions`.
 
 Na het uitvoeren van fixes:
 - Draai `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/regen-quick-indexes.py"` (schrijft alleen als er iets veranderde; bewerk de quick-indexes nooit met de hand) en daarna `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" index stats`

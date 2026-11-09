@@ -20,6 +20,7 @@ description: |
   aan waar nodig om consistentie met CLAUDE.md te behouden.
 allowed-tools:
   - Read
+  - Bash
 ---
 
 <objective>
@@ -43,19 +44,30 @@ met de bestandsnaam en onderbreek de sessiestart.
 
 **Waarom:** CLAUDE.md is de gezaghebbende bron voor alle wiki-workflows en schema-definities. Als deze skill en CLAUDE.md conflicteren, heeft CLAUDE.md voorrang. Zonder CLAUDE.md actief in context kunnen latere stappen afwijken van de actuele workflow-definitie.
 
-## Stap 2: Lees index.md
+## Stap 2: Lees de stats en koppen van index.md (niet het hele bestand)
 
-Lees `index.md` volledig. Neem het aantal pagina's uit de regel `**Total wiki pages**` in de sectie `## Stats`, en tel het aantal categoriekoppen (regels die beginnen met `##`, zonder `## Stats` en `## Meta`). Noteer beide voor gebruik in stap 5.
+Draai vanuit de vault-root:
 
-Ontbreekt `## Stats` of de regel `**Total wiki pages**`, tel dan de regels die beginnen met `- [[` en zeg in stap 5 dat het een schatting is.
+```bash
+sed -n '/^## Stats/,/^## [^S]/p' index.md
+grep '^## ' index.md
+```
 
-**Waarom:** `## Stats` wordt geteld door `scripts/register.py index stats` en klopt dus met de schijf. Regels tellen klopt niet: veel regels in index.md zijn kommalijsten met tientallen links, en bronpagina's staan in `wiki/sources-index.md`, niet in index.md.
+Neem het aantal pagina's uit de regel `**Total wiki pages**`, en tel de categoriekoppen uit de tweede uitvoer (zonder `## Stats` en `## Meta`). Noteer beide voor stap 5. Lees `index.md` niet met de Read-tool; dat doen de query- en explore-workflow wanneer ze het nodig hebben.
 
-## Stap 3: Lees log.md
+Ontbreekt `## Stats` of de regel `**Total wiki pages**`, tel dan met `grep -c '^- \[\[' index.md` en zeg in stap 5 dat het een schatting is.
 
-Lees `log.md`. Identificeer de laatste 5 entries (herkenbaar aan `## [YYYY-MM-DD] type | Titel`). Als log.md minder dan 5 entries heeft, lees alle aanwezige entries. Noteer datum en beschrijving van de meest recente entry voor gebruik in stap 5.
+**Waarom:** `## Stats` wordt geteld door `register.py index stats` en klopt met de schijf. Het volledige bestand (tientallen KB) hoort niet in de context die elke sessie geladen wordt: dat verbruikt tokens en verlaagt de naleving van de rest van de instructies.
 
-**Waarom:** De recente log geeft context over wat er in vorige sessies is gedaan — nodig om te beoordelen of er open werk is of als er follow-up vereist is vanuit de laatste activiteit.
+## Stap 3: Lees de laatste 5 log-entries (niet het hele bestand)
+
+```bash
+grep -n '^## \[' log.md | tail -5
+```
+
+Noteer datum en titel van de meest recente entry voor stap 5. Heb je de body van een entry nodig, lees dan alleen dat stuk met de Read-tool (`offset` = het regelnummer uit de uitvoer, `limit` ≈ 10). Lees `log.md` nooit volledig: het is honderden KB groot en append-only.
+
+**Waarom:** De recente log geeft context over wat er in vorige sessies is gedaan. Daarvoor zijn vijf koppen genoeg; het bestand integraal lezen kostte meer dan 100K tokens per sessiestart.
 
 ## Stap 4: Geen review-queue (opgeheven — nooit opnieuw aanmaken)
 
@@ -84,10 +96,11 @@ Wacht op de reactie van de gebruiker voordat je een vervolgactie start. Start ge
 
 <success_criteria>
 - [ ] Stap 1: CLAUDE.md volledig gelezen
-- [ ] Stap 2: index.md gelezen, paginatotaal uit `## Stats` en categorietelling beschikbaar
-- [ ] Stap 3: Laatste 5 log-entries gelezen en genoteerd
+- [ ] Stap 2: Stats en koppen van index.md via sed/grep gelezen, niet het hele bestand
+- [ ] Stap 3: Laatste 5 log-koppen via grep gelezen, log.md niet integraal geopend
+- [ ] CLAUDE-reference.md niet gelezen bij sessiestart
 - [ ] Stap 4: Geen review-queue gelezen of aangemaakt; eventuele datum-acties naar OmniFocus gerouteerd
 - [ ] Stap 5: Status gerapporteerd in exact het voorgeschreven formaat, gevolgd door "Wat wil je doen?"
 - [ ] Stap 6: Geen vervolgactie gestart zonder gebruikersinput
-- [ ] Invarianten: ≤ 300 regels, allowed-tools: [Read], description bevat trigger-varianten en verplichtheidsuitleg
+- [ ] Invarianten: ≤ 300 regels, allowed-tools: [Read, Bash] (Bash alleen voor de sed/grep in stap 2 en 3), description bevat trigger-varianten en verplichtheidsuitleg
 </success_criteria>

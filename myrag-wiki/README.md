@@ -9,15 +9,16 @@ Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (zie `templ
 - `wiki-start` — wiki-sessie starten ("wiki start", "open wiki"), oriëntatie op de wiki
 - `wiki-ingest` — bronnen verwerken vanuit `raw/`
 - `wiki-query` — kennisvragen beantwoorden via qmd + indexes
-- `wiki-lint` — health check (broken links, orphans, stubs)
+- `wiki-lint` — health check (broken links, orphans, stubs) en bronverificatie van hubs (check 10)
 - `wiki-explore` — overview / graph / gaps verkennen
+- `wiki-eval` — meet of de wiki iets oplevert: alleen raw vs alleen wiki vs beide, blind beoordeeld op `eval/questions.md`
 - `autoresearch` — iteratieve web-research-loop (WebSearch + WebFetch) die direct in `wiki/analysis/` filet volgens myrag-conventies
 
 **Agents** (gespecialiseerd, oproepbaar via Task tool):
 
 - `analysis-filer`, `contradiction-detector`, `cross-reference-sweeper`,
   `gap-detector`, `open-questions-triage`, `pdf-ingest-agent`,
-  `source-cluster-tagger`, `stub-filler`
+  `source-cluster-tagger`, `source-verifier`, `stub-filler`
 
 ## Installeren
 
@@ -52,7 +53,9 @@ Voeg de marketplace toe aan team-`settings.json` zodat alle teamleden hem automa
 
 ## Vault bootstrap
 
-De skills + agents lezen bij elke startup `CLAUDE.md` en `index.md` uit de vault root.
+De skills + agents lezen bij elke startup `CLAUDE.md` uit de vault root. Houd die onder 200 regels en
+25 KB: hij wordt elke sessie geladen. Workflowdetails horen in een `CLAUDE-reference.md` die alleen per
+workflow gelezen wordt (zo is de MyRAG-vault sinds 0.13.0 opgezet).
 Voor een nieuwe vault: kopieer het meegeleverde template en pas het aan voor je domein.
 
 ```bash
@@ -83,6 +86,9 @@ niet in `CLAUDE.md`.
   `wiki/ingest-state.md` (subcommando's `log`, `index sections|add|stats`, `ingest-state status|set|check`;
   JSON-uitvoer, `--plain`, `--dry-run`). Alleen standaardbibliotheek. Skills roepen het aan; agents geven een
   Registerblok terug dat de skill uitvoert. Eval: `python3 scripts/register_eval.py`.
+- Python 3 voor `${CLAUDE_PLUGIN_ROOT}/scripts/verify_candidates.py` (lint check 10): kiest hubs die
+  verificatie tegen `raw/` nodig hebben en lost hun `sources:` op naar raw-bestanden. Schrijft niets.
+  Eval: `python3 scripts/verify_candidates_eval.py`.
 
 ## Configuratie
 

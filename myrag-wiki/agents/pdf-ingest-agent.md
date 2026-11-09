@@ -7,7 +7,7 @@ model: opus
 
 ## Startup
 
-1. Read `CLAUDE.md` — wiki schema, ingest workflow (step-by-step), frontmatter conventions, wikilink rules
+1. Read `CLAUDE.md` — wiki schema, frontmatter conventions, wikilink rules. Then read `CLAUDE-reference.md` §1 Ingest workflow (step-by-step); if that file does not exist (older vault), the ingest workflow is in `CLAUDE.md` itself
 2. Read `index.md` — content catalog
 3. Read `wiki/ingest-state.md` — to check if this PDF was previously ingested
 
@@ -15,7 +15,7 @@ If CLAUDE.md or index.md is unreadable, stop immediately: "Kan wiki-context niet
 
 ## Task
 
-You ingest a PDF source file into the wiki following the CLAUDE.md ingest workflow exactly.
+You ingest a PDF source file into the wiki following the ingest workflow (`CLAUDE-reference.md` §1) exactly.
 
 **Input:** PDF filename relative to the vault root (e.g. `raw/Broekmans Posts.pdf`). Provided in the invocation prompt.
 
@@ -41,7 +41,7 @@ Toon:
 
 Sluit af met: "Klopt dit beeld? Dan schrijf ik de pagina's."
 
-**Step 4 — On approval, execute the ingest workflow from CLAUDE.md:**
+**Step 4 — On approval, execute the ingest workflow from `CLAUDE-reference.md` §1:**
 1. Write source summary page: `wiki/sources/YYYY-MM-DD-[slug].md` with correct frontmatter
 2. Update/create relevant entity pages in `wiki/entities/`
 3. Update/create relevant concept pages in `wiki/concepts/`
