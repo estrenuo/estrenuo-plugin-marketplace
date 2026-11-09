@@ -7,7 +7,7 @@ Skills + agents voor het onderhouden van een Obsidian-based LLM wiki (zie `templ
 **Skills** (auto-activerend op natural-language triggers):
 
 - `wiki-start` — wiki-sessie starten ("wiki start", "open wiki"), oriëntatie op de wiki
-- `wiki-ingest` — bronnen verwerken vanuit `raw/`
+- `wiki-ingest` — bronnen verwerken vanuit `raw/`; standaard alleen indexeren (raw-rij plus qmd), volledige ingest met wikipagina's op verzoek
 - `wiki-query` — kennisvragen beantwoorden via qmd + indexes
 - `wiki-lint` — health check (broken links, orphans, stubs) en bronverificatie van hubs (check 10)
 - `wiki-explore` — overview / graph / gaps verkennen
@@ -89,6 +89,10 @@ niet in `CLAUDE.md`.
 - Python 3 voor `${CLAUDE_PLUGIN_ROOT}/scripts/verify_candidates.py` (lint check 10): kiest hubs die
   verificatie tegen `raw/` nodig hebben en lost hun `sources:` op naar raw-bestanden. Schrijft niets.
   Eval: `python3 scripts/verify_candidates_eval.py`.
+- `pdftotext` (poppler) voor `${CLAUDE_PLUGIN_ROOT}/scripts/raw_pdf_text.py`: tekstversies van de PDF's in `raw/`
+  naar `~/.cache/myrag/raw-pdf-text`, buiten de vault. Eenmalig per vault de qmd-collecties aanmaken:
+  `qmd collection add "$PWD/raw" --name raw --mask "*.md,claude-archief/**/*.md"` (expliciet patroon, zodat mappen
+  als `credentials/` er nooit in komen) en `qmd collection add ~/.cache/myrag/raw-pdf-text --name raw-pdf`.
 
 ## Configuratie
 

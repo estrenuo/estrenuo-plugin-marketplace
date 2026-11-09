@@ -16,6 +16,7 @@ Run from the vault root (or pass --vault PATH):
 
     register.py ingest-state status [--raw raw/X.pdf]
     register.py ingest-state set --raw raw/X.pdf [--page wiki/sources/x.md]… [--date YYYY-MM-DD]
+    register.py ingest-state set --raw raw/X.pdf --index-only    # rij zonder wikipagina
     register.py ingest-state check [--fix]
     register.py ingest-state remove --raw raw/X.pdf [--force] [--date YYYY-MM-DD]
 
@@ -637,9 +638,17 @@ def _set(vault: Path, table: _StateTable, args) -> dict:
     mtime, digest = raw_fingerprint(path)
     row = table.find(name)
     status = "updated"
+    if args.index_only and pages:
+        raise Fail(1, "--index-only en --page sluiten elkaar uit")
+    if row is None and args.index_only:
+        row = Row(f"| `{esc_file(name)}` | {mtime} | {digest} | - | {date} |")
+        keys = [r.key() for r in table.rows]
+        table.rows.insert(bisect.bisect_right(keys, row.key()), row)
+        return {"status": "added", "file": "wiki/ingest-state.md", "raw": name,
+                "mtime": mtime, "hash": digest, "source_page": "-", "index_only": True}
     if row is None:
         if not pages:
-            raise Fail(1, f"raw/{name} heeft nog geen rij; geef minstens één --page")
+            raise Fail(1, f"raw/{name} heeft nog geen rij; geef minstens één --page, of --index-only")
         pages.sort(key=lambda p: 0 if p.dir == "sources" else 1)
         row = Row(f"| `{esc_file(name)}` | {mtime} | {digest} | {', '.join(_link(p) for p in pages)} | {date} |")
         keys = [r.key() for r in table.rows]
@@ -833,6 +842,8 @@ def build_parser() -> argparse.ArgumentParser:
     s2 = sts.add_parser("set", parents=[common], help="rij zetten of verversen")
     s2.add_argument("--raw", required=True)
     s2.add_argument("--page", action="append")
+    s2.add_argument("--index-only", action="store_true",
+                    help="rij zonder wikipagina (Source page '-'): raw alleen geïndexeerd")
     s2.add_argument("--date")
     s3 = sts.add_parser("check", parents=[common], help="tabel controleren")
     s3.add_argument("--fix", action="store_true", help="escape en volgorde herstellen")

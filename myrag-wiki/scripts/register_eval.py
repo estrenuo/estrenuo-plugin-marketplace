@@ -371,6 +371,34 @@ def main() -> int:
             code, out = run(root, "ingest-state", "check")
             check("pipe + nfd: check schoon", code == 0 and out.get("status") == "ok")
 
+        # ---------------- ingest-state set --index-only (eigen vault) ----------------
+        with tempfile.TemporaryDirectory() as tmp4:
+            root = Path(tmp4)
+            make_vault(root)
+            state = root / "wiki" / "ingest-state.md"
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/Nieuw.md", "--index-only", "--date", "2026-11-09")
+            txt = state.read_text(encoding="utf-8")
+            check("index-only: nieuwe rij met Source page '-'",
+                  code == 0 and out.get("status") == "added" and out.get("index_only") is True
+                  and "| `Nieuw.md` |" in txt and "| - | 2026-11-09 |" in txt)
+            code, out = run(root, "ingest-state", "status", "--list-unchanged")
+            check("index-only: status ziet de raw als Unchanged, niet New",
+                  "Nieuw.md" not in out.get("new", []) and "Nieuw.md" in out.get("unchanged", []))
+            code, out = run(root, "ingest-state", "check")
+            check("index-only: check blijft schoon op die rij",
+                  all(p.get("file") != "Nieuw.md" for p in out.get("problems", [])))
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/Nieuw.md", "--index-only")
+            check("index-only: tweede keer werkt de rij bij, geen dubbel",
+                  code == 0 and out.get("status") == "updated"
+                  and state.read_text(encoding="utf-8").count("`Nieuw.md`") == 1)
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/Nieuw.md", "--page", "wiki/sources/s-n.md")
+            txt = state.read_text(encoding="utf-8")
+            check("index-only: later toch een bronpagina vervangt de '-'",
+                  code == 0 and "[[s-n\\|Bron Nieuw]]" in txt and "| - |" not in txt.split("`Nieuw.md`")[1].split("\n")[0])
+            code, out = run(root, "ingest-state", "set", "--raw", "raw/beta.pdf", "--index-only",
+                            "--page", "wiki/sources/s-a.md")
+            check("index-only: samen met --page geweigerd", code == 1)
+
         # ---------------- ingest-state remove (eigen vault) ----------------
         with tempfile.TemporaryDirectory() as tmp3:
             root = Path(tmp3)

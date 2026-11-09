@@ -32,6 +32,8 @@ Voer alle stappen in volgorde uit. Sla geen stap over.
 
 **Stap 1: Bevraag qmd (primaire retrieval)**
 
+Collecties: `myrag` (de wiki), `books` (vakboeken), `raw` (alle markdown-bronnen in `raw/`) en `raw-pdf` (tekstversies van de PDF's in `raw/`). Een query zonder `collections` doorzoekt ze allemaal; dat is de standaard. Sinds 0.14.0 krijgen de meeste nieuwe bronnen geen wikipagina meer, dus een feitenvraag vind je vaak alleen in `raw`/`raw-pdf`. Citeer een raw-treffer als `` `raw/<bestand>` ``, en een `raw-pdf`-treffer als het oorspronkelijke PDF-pad dat bovenin de tekstversie staat (`Bron: raw/…`).
+
 Roep de qmd `query`-tool aan — `mcp__plugin_myrag-wiki_qmd-feat__query` (of `mcp__plugin_myrag-wiki_qmd-feat__query` als qmd via project-MCP i.p.v. de plugin geladen is) — met minimaal twee sub-queries:
 
 ```
