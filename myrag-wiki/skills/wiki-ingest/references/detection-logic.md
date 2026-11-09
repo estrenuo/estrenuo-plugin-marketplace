@@ -20,7 +20,8 @@ Bestand gevonden in raw/ (niet raw/assets/)
 │  → NEW: voer stappen 1-10 uit
 │
 ├─ Rij bestaat, maar bestand ontbreekt in raw/?
-│  → DELETED: flageer in rapport, vraag gebruiker bevestiging voor archivering
+│  → DELETED: flageer in rapport, vraag gebruiker bevestiging voor archivering;
+│    na akkoord: register.py ingest-state remove --raw "raw/<bestand>"
 │  → Verwijder de pagina NIET zonder expliciete goedkeuring
 │
 ├─ Rij bestaat, mtime verschilt ÉN hash verschilt?

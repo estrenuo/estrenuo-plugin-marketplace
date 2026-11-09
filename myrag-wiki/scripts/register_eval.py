@@ -371,6 +371,56 @@ def main() -> int:
             code, out = run(root, "ingest-state", "check")
             check("pipe + nfd: check schoon", code == 0 and out.get("status") == "ok")
 
+        # ---------------- ingest-state remove (eigen vault) ----------------
+        with tempfile.TemporaryDirectory() as tmp3:
+            root = Path(tmp3)
+            make_vault(root)
+            state = root / "wiki" / "ingest-state.md"
+            # bestaand.md: wel een Multi-page-rij, geen bestand op schijf; geef hem ook een State-rij.
+            txt = state.read_text(encoding="utf-8").replace(
+                "| `kapot.md` |",
+                "| `bestaand.md` | 2026-01-01T00:00:00 | 0123456789ab | [[s-a\\|Bron A]], [[hub\\|Hub]] | 2026-01-01 |\n| `kapot.md` |")
+            state.write_text(txt, encoding="utf-8")
+
+            before = state.read_text(encoding="utf-8")
+            code, out = run(root, "ingest-state", "remove", "--raw", "raw/Alpha.md")
+            check("remove: weigert een raw die nog op schijf staat",
+                  code == 1 and state.read_text(encoding="utf-8") == before)
+            code, out = run(root, "ingest-state", "remove", "--raw", "raw/bestaatniet.md")
+            check("remove: onbekende raw geeft exit 2", code == 2)
+            code, out = run(root, "--dry-run", "ingest-state", "remove", "--raw", "raw/weg.md")
+            check("remove: --dry-run schrijft niets en toont de diff",
+                  code == 0 and out.get("status") == "dry-run" and "-| `weg.md`" in out.get("diff", "")
+                  and state.read_text(encoding="utf-8") == before)
+
+            code, out = run(root, "ingest-state", "remove", "--raw", "raw/weg.md", "--date", "2026-11-09")
+            txt = state.read_text(encoding="utf-8")
+            check("remove: rij weg, paginaverwijzing gemeld, rest ongemoeid",
+                  code == 0 and out.get("status") == "removed" and out.get("pages") == ["s-w"]
+                  and "`weg.md`" not in txt and "| `Alpha.md` |" in txt and "| `kapot.md` |" in txt)
+            check("remove: updated in frontmatter gezet", "updated: 2026-11-09" in txt)
+            code, out = run(root, "ingest-state", "status")
+            check("remove: status meldt geen Deleted meer", out.get("deleted") == ["bestaand.md"])
+
+            code, out = run(root, "ingest-state", "remove", "--raw", "raw/bestaand.md")
+            txt = state.read_text(encoding="utf-8")
+            check("remove: ook de Multi-page-rij weg, tabelkoppen intact",
+                  code == 0 and out.get("multi_page") == "removed" and "bestaand.md" not in txt
+                  and "Notitie die moet blijven" not in txt and "| Raw | Primary" in txt
+                  and "| File | mtime | hash | Source page | Ingested |" in txt)
+            code, out = run(root, "ingest-state", "status")
+            check("remove: na beide removes geen Deleted", out.get("deleted") == [])
+
+            code, out = run(root, "ingest-state", "remove", "--raw", "raw/Alpha.md", "--force")
+            txt = state.read_text(encoding="utf-8")
+            code2, out2 = run(root, "ingest-state", "status")
+            check("remove --force: rij weg, bestand blijft, status meldt het als New",
+                  code == 0 and out.get("still_on_disk") is True and "`Alpha.md`" not in txt
+                  and (root / "raw" / "Alpha.md").exists() and "Alpha.md" in out2.get("new", []))
+            code, out = run(root, "ingest-state", "check")
+            check("remove: check daarna nog schoon op de overgebleven goede rijen",
+                  all(p.get("file") == "kapot.md" for p in out.get("problems", [])))
+
     failed = [n for n, ok in results if not ok]
     for name, ok in results:
         print(f"{'PASS' if ok else 'FAIL'}  {name}")

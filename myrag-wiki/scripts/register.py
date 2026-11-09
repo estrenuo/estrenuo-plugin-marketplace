@@ -17,6 +17,7 @@ Run from the vault root (or pass --vault PATH):
     register.py ingest-state status [--raw raw/X.pdf]
     register.py ingest-state set --raw raw/X.pdf [--page wiki/sources/x.md]… [--date YYYY-MM-DD]
     register.py ingest-state check [--fix]
+    register.py ingest-state remove --raw raw/X.pdf [--force] [--date YYYY-MM-DD]
 
 Common flags: --vault PATH, --plain (readable output; JSON is the default),
 --dry-run (print a diff, write nothing).
@@ -33,6 +34,9 @@ Guarantees:
   `[[slug\\|Title]]`, a `|` in a raw name written as `\\|` and the name stored in
   NFC (macOS file names are NFD), rows kept in case-insensitive order, only the table under
   `## State table` (and new rows in `## Multi-page references`) is touched.
+  `remove` drops the row of a raw that is gone from disk (refused while the file
+  still exists, unless --force) plus its Multi-page references row; it never
+  touches wiki pages, it only reports which pages the row pointed to.
 - index.md: one line `- [[slug|Title]] — summary (N sources)` per call, placed
   in an existing section/group; existing text and the rest of the frontmatter
   stay byte-for-byte the same. Source-style pages (sources/, recipes/,
@@ -613,7 +617,10 @@ def cmd_ingest_state(vault: Path, args) -> dict:
         old = table.text
         if args.state_cmd == "check":
             return _check(table, args)
-        result = _set(vault, table, args)
+        if args.state_cmd == "remove":
+            result = _remove(vault, table, args)
+        else:
+            result = _set(vault, table, args)
         new = set_updated(table.render(), check_date(args.date))
         if args.dry_run:
             return {"status": "dry-run", "file": "wiki/ingest-state.md",
@@ -659,6 +666,49 @@ def _set(vault: Path, table: _StateTable, args) -> dict:
         table.end += shift
         result["multi_page"] = state
     return result
+
+
+def _drop_multi_page(lines: list[str], name: str) -> tuple[str, int | None]:
+    """Delete the row for `name` from the Multi-page references table, if any."""
+    sec = next((i for i, l in enumerate(lines) if l.startswith("## Multi-page references")), None)
+    if sec is None:
+        return "no-section", None
+    head = next((i for i in range(sec, len(lines))
+                 if lines[i].startswith("| Raw") or lines[i].startswith("## State table")), None)
+    if head is None or lines[head].startswith("## State table"):
+        return "no-table", None
+    i = head + 2
+    while i < len(lines) and lines[i].startswith("|"):
+        cells = [c.strip() for c in CELL_SPLIT.split(lines[i])[1:-1]]
+        if cells and nfc(cells[0].strip("`").replace("\\|", "|")) == name:
+            del lines[i]
+            return "removed", i
+        i += 1
+    return "not-listed", None
+
+
+def _remove(vault: Path, table: _StateTable, args) -> dict:
+    rel = args.raw.strip()
+    if rel.startswith("raw/"):
+        rel = rel[4:]
+    name = nfc(rel)
+    row = table.find(name)
+    if row is None:
+        raise Fail(2, f"geen rij voor raw/{name} in ingest-state.md")
+    path = vault / "raw" / rel
+    on_disk = path.is_file() or (path.parent.is_dir() and any(
+        nfc(p.name) == nfc(path.name) and p.is_file() for p in path.parent.iterdir()))
+    if on_disk and not args.force:
+        raise Fail(1, f"raw/{name} staat nog op schijf; verwijder of verplaats het eerst, "
+                      "of geef --force (de volgende status meldt het dan als New)")
+    table.rows = [r for r in table.rows if r is not row]
+    state, at = _drop_multi_page(table.lines, name)
+    if at is not None and at < table.first:
+        table.first -= 1
+        table.end -= 1
+    return {"status": "removed", "file": "wiki/ingest-state.md", "raw": name,
+            "source_page": row.source, "pages": row.slugs(), "multi_page": state,
+            "still_on_disk": on_disk}
 
 
 def _check(table: _StateTable, args) -> dict:
@@ -786,6 +836,10 @@ def build_parser() -> argparse.ArgumentParser:
     s2.add_argument("--date")
     s3 = sts.add_parser("check", parents=[common], help="tabel controleren")
     s3.add_argument("--fix", action="store_true", help="escape en volgorde herstellen")
+    s4 = sts.add_parser("remove", parents=[common], help="rij van een verwijderde raw weghalen")
+    s4.add_argument("--raw", required=True)
+    s4.add_argument("--force", action="store_true", help="ook als het bestand nog op schijf staat")
+    s4.add_argument("--date")
     return p
 
 
