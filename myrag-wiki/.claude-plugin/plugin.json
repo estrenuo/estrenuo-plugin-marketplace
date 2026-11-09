@@ -1,6 +1,6 @@
 {
   "name": "myrag-wiki",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "Wiki maintainer skills voor een Obsidian-based LLM wiki: ingest, query, lint met bronverificatie, explore, eval, sessiestart en autoresearch.",
   "author": {
     "name": "Sander Robijns | Estrenuo"
