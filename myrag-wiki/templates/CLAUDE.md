@@ -210,6 +210,7 @@ Rules:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state status                                   # New/Modified/Unchanged/Deleted (leest alleen)
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<bestand>" --page wiki/sources/<slug>.md [--page …]
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state check [--fix]                            # kapotte rijen vinden / escape en volgorde herstellen
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state set --raw "raw/<file>" --index-only     # rij zonder wikipagina (standaard-ingest)
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" ingest-state remove --raw "raw/<file>" [--force]        # rij van een verwijderde raw weghalen (+ Multi-page-rij)
 ```
 
